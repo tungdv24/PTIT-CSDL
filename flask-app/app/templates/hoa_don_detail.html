@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Hoa don {{ hd.so_hoa_don }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Hoa don {{ hd.so_hoa_don }}</h1>
+  <a class="btn secondary" href="{{ url_for('finance.hoa_don_list', thang=hd.thang, nam=hd.nam) }}">← Quay lai</a>
+</div>
+<div class="card">
+  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div><strong>{{ hd.ten_cong_ty }}</strong></div>
+      <div style="color:#64748b;">MST: {{ hd.ma_so_thue }}</div>
+      <div style="color:#64748b;">{{ hd.dia_chi or '' }}</div>
+    </div>
+    <div style="text-align:right;">
+      <div>Ky: <strong>Thang {{ hd.thang }}/{{ hd.nam }}</strong></div>
+      <div>Ngay tao: {{ hd.ngay_tao }}</div>
+      <div>{% if hd.trang_thai_thanh_toan=='DA_THANH_TOAN' %}<span class="badge green">Da thanh toan</span>{% else %}<span class="badge yellow">Chua thanh toan</span>{% endif %}</div>
+    </div>
+  </div>
+</div>
+<div class="card" style="padding:0;overflow:hidden;">
+  <table>
+    <thead><tr><th>Loai</th><th>Noi dung</th><th>So luong</th><th>Don gia</th><th>Thanh tien</th></tr></thead>
+    <tbody>
+      {% for c in chi_tiet %}
+      <tr>
+        <td><span class="badge {{ 'blue' if c.loai_chi_phi=='TIEN_THUE_PHONG' else 'secondary' }}">{{ c.loai_chi_phi }}</span></td>
+        <td>{{ c.noi_dung }}</td>
+        <td>{{ c.so_luong }}</td>
+        <td>{{ c.don_gia|money }} đ</td>
+        <td>{{ c.thanh_tien|money }} đ</td>
+      </tr>
+      {% endfor %}
+      <tr><td colspan="4" style="text-align:right;"><strong>Tien thue van phong</strong></td><td>{{ hd.tien_thue_van_phong|money }} đ</td></tr>
+      <tr><td colspan="4" style="text-align:right;"><strong>Tien dich vu</strong></td><td>{{ hd.tien_dich_vu|money }} đ</td></tr>
+      <tr style="background:#f8fafc;"><td colspan="4" style="text-align:right;"><strong>TONG CONG</strong></td><td><strong style="font-size:16px;">{{ hd.tong_tien|money }} đ</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+{% if (current_user.is_admin or current_user.vai_tro=='QUAN_LY') and hd.trang_thai_thanh_toan != 'DA_THANH_TOAN' %}
+<form method="post" action="{{ url_for('finance.hoa_don_thanh_toan', ma_hoa_don=hd.ma_hoa_don) }}">
+  <button class="btn">✓ Danh dau da thanh toan</button>
+</form>
+{% endif %}
+{% endblock %}

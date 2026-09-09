@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Bang: {{ name }}</h1>
+  <a class="btn secondary" href="{{ url_for('dbviewer.index') }}">← Danh sach bang</a>
+</div>
+<div class="card" style="padding:0;overflow:auto;">
+  <table>
+    <thead><tr>{% for c in cols %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>{% for c in cols %}<td>{{ row[c] if row[c] is not none else 'NULL' }}</td>{% endfor %}</tr>
+      {% else %}
+      <tr><td colspan="{{ cols|length }}" style="text-align:center;color:#64748b;padding:24px;">Khong co du lieu.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="toolbar" style="justify-content:space-between;">
+  <span style="color:#64748b;">Tong {{ total }} dong · trang {{ page }}/{{ total_pages }}</span>
+  <span>
+    {% if page > 1 %}<a class="btn sm secondary" href="{{ url_for('dbviewer.browse', name=name, page=page-1) }}">← Truoc</a>{% endif %}
+    {% if page < total_pages %}<a class="btn sm secondary" href="{{ url_for('dbviewer.browse', name=name, page=page+1) }}">Sau →</a>{% endif %}
+  </span>
+</div>
+{% endblock %}

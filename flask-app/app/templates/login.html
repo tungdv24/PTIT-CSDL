@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Dang nhap{% endblock %}
+{% block auth_content %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f172a;">
+  <div style="background:#fff;padding:36px;border-radius:14px;width:360px;box-shadow:0 20px 50px rgba(0,0,0,.3);">
+    <h2 style="margin:0 0 4px;">🏢 Quan ly toa nha</h2>
+    <p style="color:#64748b;margin:0 0 20px;font-size:14px;">Dang nhap he thong</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form method="post">
+      <label>Ten dang nhap</label>
+      <input name="username" autofocus required>
+      <label>Mat khau</label>
+      <input name="password" type="password" required>
+      <button class="btn" style="width:100%;margin-top:18px;">Dang nhap</button>
+    </form>
+    <p style="color:#94a3b8;font-size:12px;margin-top:18px;text-align:center;">
+      Mac dinh: admin / admin123
+    </p>
+  </div>
+</div>
+{% endblock %}

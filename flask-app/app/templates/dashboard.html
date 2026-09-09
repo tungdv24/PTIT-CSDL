@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Dashboard</h1>
+  <form class="toolbar" method="get">
+    <select name="thang" onchange="this.form.submit()">
+      {% for m in range(1,13) %}<option value="{{ m }}" {{ 'selected' if m==thang }}>Thang {{ m }}</option>{% endfor %}
+    </select>
+    <select name="nam" onchange="this.form.submit()">
+      {% for y in [2025,2026,2027] %}<option value="{{ y }}" {{ 'selected' if y==nam }}>{{ y }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="grid">
+  <div class="kpi"><div class="label">Tong thu ({{ thang }}/{{ nam }})</div><div class="value" style="color:#16a34a;">{{ tong_thu|money }} đ</div></div>
+  <div class="kpi"><div class="label">Tong chi</div><div class="value" style="color:#dc2626;">{{ tong_chi|money }} đ</div></div>
+  <div class="kpi"><div class="label">Loi nhuan rong</div><div class="value" style="color:{{ '#16a34a' if loi_nhuan>=0 else '#dc2626' }};">{{ loi_nhuan|money }} đ</div></div>
+  <div class="kpi"><div class="label">Ty le lap day</div><div class="value">{{ occupancy }}%<span style="font-size:13px;color:#64748b;"> ({{ vp_da_thue }}/{{ tong_vp }})</span></div></div>
+</div>
+
+<div class="grid" style="margin-top:16px;">
+  <div class="kpi"><div class="label">Cong ty</div><div class="value">{{ counts.cong_ty }}</div></div>
+  <div class="kpi"><div class="label">Van phong</div><div class="value">{{ counts.van_phong }}</div></div>
+  <div class="kpi"><div class="label">Hop dong hieu luc</div><div class="value">{{ counts.hop_dong }}</div></div>
+  <div class="kpi"><div class="label">NV toa nha</div><div class="value">{{ counts.nhan_vien_tn }}</div></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px;">
+  <div class="card">
+    <h3 style="margin-top:0;">Doanh thu theo thang ({{ nam }})</h3>
+    {% set maxv = (doanh_thu_thang | map(attribute='tong') | max) or 1 %}
+    <div style="display:flex;align-items:flex-end;gap:8px;height:180px;">
+      {% for d in doanh_thu_thang %}
+      <div style="flex:1;text-align:center;">
+        <div title="{{ d.tong|money }}" style="background:#2563eb;border-radius:4px 4px 0 0;height:{{ (d.tong / maxv * 150)|round(0,'floor') }}px;"></div>
+        <div style="font-size:11px;color:#64748b;margin-top:4px;">T{{ d.thang }}</div>
+      </div>
+      {% endfor %}
+      {% if not doanh_thu_thang %}<p style="color:#64748b;">Chua co du lieu.</p>{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0;">Top cong ty ({{ thang }}/{{ nam }})</h3>
+    <table>
+      <tr><th>Cong ty</th><th>Tong tien</th><th>Trang thai</th></tr>
+      {% for c in top_cong_ty %}
+      <tr>
+        <td>{{ c.ten_cong_ty }}</td>
+        <td>{{ c.tong_tien|money }} đ</td>
+        <td>{% if c.trang_thai_thanh_toan=='DA_THANH_TOAN' %}<span class="badge green">Da TT</span>{% else %}<span class="badge yellow">Chua TT</span>{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" style="color:#64748b;">Chua co hoa don.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

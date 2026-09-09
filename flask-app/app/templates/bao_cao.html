@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Bao cao Lai/Lo{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Bao cao Lai/Lo nam {{ nam }}</h1>
+  <form class="toolbar" method="get">
+    <select name="nam">{% for y in [2025,2026,2027] %}<option value="{{ y }}" {{ 'selected' if y==nam }}>{{ y }}</option>{% endfor %}</select>
+    <button class="btn secondary">Xem</button>
+  </form>
+</div>
+
+<div class="grid">
+  <div class="kpi"><div class="label">Tong thu ca nam</div><div class="value" style="color:#16a34a;">{{ tong.thu|money }} đ</div></div>
+  <div class="kpi"><div class="label">Tong chi ca nam</div><div class="value" style="color:#dc2626;">{{ tong.chi|money }} đ</div></div>
+  <div class="kpi"><div class="label">Loi nhuan ca nam</div><div class="value" style="color:{{ '#16a34a' if tong.loi_nhuan>=0 else '#dc2626' }};">{{ tong.loi_nhuan|money }} đ</div></div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;margin-top:18px;">
+  <table>
+    <thead><tr><th>Thang</th><th>Tong thu</th><th>Luong NV</th><th>Chi van hanh</th><th>Tong chi</th><th>Loi nhuan</th></tr></thead>
+    <tbody>
+      {% for d in data %}
+      <tr>
+        <td>Thang {{ d.thang }}</td>
+        <td style="color:#16a34a;">{{ d.thu|money }} đ</td>
+        <td>{{ d.luong|money }} đ</td>
+        <td>{{ d.chi_vh|money }} đ</td>
+        <td style="color:#dc2626;">{{ d.chi|money }} đ</td>
+        <td style="color:{{ '#16a34a' if d.loi_nhuan>=0 else '#dc2626' }};"><strong>{{ d.loi_nhuan|money }} đ</strong></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

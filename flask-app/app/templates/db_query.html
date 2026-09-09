@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Truy van SQL{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Chay truy van SQL (chi doc)</h1>
+  <a class="btn secondary" href="{{ url_for('dbviewer.index') }}">← Danh sach bang</a>
+</div>
+<div class="card">
+  <form method="post">
+    <label>Cau lenh (chi cho phep SELECT / SHOW / DESCRIBE / EXPLAIN)</label>
+    <textarea name="sql" rows="4" style="font-family:monospace;">{{ sql }}</textarea>
+    <div style="margin-top:12px;"><button class="btn">▶ Chay</button></div>
+  </form>
+</div>
+{% if error %}<div class="flash danger">{{ error }}</div>{% endif %}
+{% if rows is not none %}
+<div class="card" style="padding:0;overflow:auto;">
+  <table>
+    <thead><tr>{% for c in cols %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>{% for c in cols %}<td>{{ row[c] if row[c] is not none else 'NULL' }}</td>{% endfor %}</tr>
+      {% else %}
+      <tr><td colspan="{{ cols|length or 1 }}" style="text-align:center;color:#64748b;padding:24px;">0 dong.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p style="color:#64748b;">{{ rows|length }} dong.</p>
+{% endif %}
+{% endblock %}

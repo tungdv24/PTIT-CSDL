@@ -1,0 +1,28 @@
+# Secrets / env
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# DB backups
+backup_*.sql
+
+# Internal / planning docs (not published)
+AGENT.md
+plan.md
+setup.md
+database.md
+*nhóm*.md
+[M26CQHT03-B]*
