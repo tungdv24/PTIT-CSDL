@@ -20,6 +20,24 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  mongodb:
+    image: mongo:4.4
+    container_name: office_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-changeme}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
   phpmyadmin:
     image: phpmyadmin:5.2
     container_name: office_phpmyadmin
@@ -31,6 +49,21 @@ services:
       UPLOAD_LIMIT: 100M
     depends_on:
       mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mongo-express:
+    image: mongo-express:1.0.2
+    container_name: office_mongo_express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: "mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-changeme}@mongodb:27017/?authSource=admin"
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-admin}
+    depends_on:
+      mongodb:
         condition: service_healthy
     restart: unless-stopped
 
@@ -46,12 +79,18 @@ services:
       MYSQL_USER: root
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-QuanLyToaNha}
+      MONGO_URI: "mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-changeme}@mongodb:27017/?authSource=admin"
+      MONGO_DB: ${MONGO_DB:-quanlytoanha_logs}
+      LOG_TTL_DAYS: ${LOG_TTL_DAYS:-90}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
     depends_on:
       mysql:
+        condition: service_healthy
+      mongodb:
         condition: service_healthy
     restart: unless-stopped
 
 volumes:
   mysql_data:
+  mongo_data:

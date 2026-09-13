@@ -1,19 +1,21 @@
 # HE THONG QUAN LY TOA NHA VAN PHONG (Flask + MySQL)
 
-Ung dung web quan ly toa nha van phong cho thue, xay dung theo dac ta CSDL trong `flask-app/` (17 bang nghiep vu + 1 bang nguoi dung). Backend + frontend gop chung trong mot app Flask (Jinja2 templates), CSDL **MySQL 8.0** (khong dung NoSQL). Kem cong cu xem CSDL tich hop (kieu phpMyAdmin) va phpMyAdmin rieng.
+Ung dung web quan ly toa nha van phong cho thue, xay dung theo dac ta CSDL trong `flask-app/` (17 bang nghiep vu + 1 bang nguoi dung). Backend + frontend gop chung trong mot app Flask (Jinja2 templates). He thong dung **2 CSDL**: **MySQL 8.0** cho du lieu nghiep vu, va **MongoDB** cho nhat ky hoat dong (activity log). Kem cong cu quan tri: **phpMyAdmin** (MySQL) va **Mongo Express** (MongoDB), cung trang "Xem CSDL" tich hop trong app.
 
 > Mon hoc: **M26CQHT03-B - Nhom 7** | De tai: He CSDL quan ly toa nha van phong.
+> Khai niem NoSQL: xem `nosql.md`. Huong dan van hanh: xem `huong-dan-su-dung.md`.
 
 ## Tech Stack
 
 | Tang | Cong nghe |
 |------|-----------|
 | Web app | Python 3.11 + Flask 3 + Jinja2 + gunicorn |
-| CSDL | MySQL 8.0 |
-| DB access | SQLAlchemy Core (raw SQL) + PyMySQL |
-| Auth | Flask-Login + Werkzeug password hashing |
-| Quan tri DB | phpMyAdmin 5.2 + trang "Xem CSDL" tich hop trong app |
-| Trien khai | Docker Compose |
+| CSDL quan he | MySQL 8.0 (du lieu nghiep vu) |
+| CSDL NoSQL | MongoDB 4.4 (nhat ky hoat dong, TTL index) |
+| DB access | SQLAlchemy Core + PyMySQL; PyMongo |
+| Auth | Flask-Login + Werkzeug password hashing (4 vai tro) |
+| Quan tri DB | phpMyAdmin 5.2 + Mongo Express 1.0 + trang "Xem CSDL" trong app |
+| Trien khai | Docker Compose (5 dich vu) |
 
 ## Chuc nang chinh
 
@@ -52,7 +54,7 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 ```bash
 docker compose up -d --build
 ```
-Lan dau se mat vai phut de tai image MySQL/phpMyAdmin va build app. Khi app khoi dong, no **tu dong**:
+Lan dau se mat vai phut de tai image MySQL/MongoDB/phpMyAdmin/Mongo Express va build app. Khi app khoi dong, no **tu dong**:
 - Tao database `QuanLyToaNha`
 - Chay `flask-app/sql/schema.sql` (18 bang)
 - Nap du lieu mau `flask-app/sql/seed.sql` (chi khi bang CONG_TY con rong)
@@ -62,17 +64,21 @@ Lan dau se mat vai phut de tai image MySQL/phpMyAdmin va build app. Khi app khoi
 | Dich vu | URL |
 |---------|-----|
 | Web app | http://localhost:5000 |
-| phpMyAdmin | http://localhost:8080 |
+| phpMyAdmin (MySQL) | http://localhost:8080 |
+| Mongo Express (MongoDB) | http://localhost:8081 |
 | MySQL | localhost:3306 |
+| MongoDB | localhost:27017 |
 
-Dang nhap app bang tai khoan `admin` (mat khau la `ADMIN_PASSWORD` ban dat trong `.env`).
-Dang nhap phpMyAdmin bang tai khoan MySQL (`root` hoac `office_admin`, mat khau `MYSQL_PASSWORD`).
+Dang nhap app bang tai khoan `admin` (mat khau la `ADMIN_PASSWORD` ban dat trong `.env`, mac dinh `admin`).
+phpMyAdmin: dung tai khoan MySQL (`root` hoac `office_admin`, mat khau `MYSQL_PASSWORD`).
+Mongo Express: basic auth `MONGO_EXPRESS_USER` / `MONGO_EXPRESS_PASSWORD` trong `.env`.
 
 ### 5. Kiem tra nhanh
 ```bash
 docker compose ps
 curl -s -o /dev/null -w "web:%{http_code}\n" http://localhost:5000/login   # 200
 curl -s -o /dev/null -w "pma:%{http_code}\n" http://localhost:8080/         # 200
+curl -s -o /dev/null -w "me :%{http_code}\n" -u admin:admin http://localhost:8081/  # 200
 ```
 
 ### 6. Dung / reset
@@ -113,7 +119,7 @@ Tao tu dong o lan chay dau. Mat khau `admin` lay tu `ADMIN_PASSWORD` trong `.env
 
 ```
 .
-├── docker-compose.yml        # MySQL + phpMyAdmin + Flask app
+├── docker-compose.yml        # MySQL + MongoDB + phpMyAdmin + Mongo Express + Flask app
 ├── .env.example              # mau bien moi truong (copy thanh .env)
 ├── queries.md                # tap lenh SQL van hanh + quan sat CSDL
 └── flask-app/
