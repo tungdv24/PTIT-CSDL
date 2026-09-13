@@ -4,12 +4,12 @@
 USE QuanLyToaNha;
 
 -- ---- CONG_TY ----
-INSERT INTO CONG_TY (ma_so_thue, ten_cong_ty, nguoi_dai_dien, so_dien_thoai, email, dia_chi, trang_thai) VALUES
-('0101234567', 'Cong ty TNHH Cong Nghe ABC', 'Nguyen Van A', '0901111111', 'contact@abc.vn', 'Tang 8, Toa nha PTIT', 'DANG_THUE'),
-('0102345678', 'Cong ty CP Tai Chinh XYZ', 'Tran Thi B', '0902222222', 'info@xyz.vn', 'Tang 12, Toa nha PTIT', 'DANG_THUE'),
-('0103456789', 'Cong ty TNHH Thuong Mai DEF', 'Le Van C', '0903333333', 'sales@def.vn', 'Tang 5, Toa nha PTIT', 'DANG_THUE'),
-('0104567890', 'Cong ty CP Giao Duc GHI', 'Pham Thi D', '0904444444', 'hello@ghi.vn', 'Tang 3, Toa nha PTIT', 'DANG_THUE'),
-('0105678901', 'Cong ty TNHH Logistics JKL', 'Hoang Van E', '0905555555', 'ops@jkl.vn', 'Tang 10, Toa nha PTIT', 'DA_CHUYEN_DI');
+INSERT INTO CONG_TY (ma_so_cong_ty, ma_so_thue, ten_cong_ty, nguoi_dai_dien, so_dien_thoai, email, dia_chi, trang_thai) VALUES
+('CT-01', '0101234567', 'Cong ty TNHH Cong Nghe ABC', 'Nguyen Van A', '0901111111', 'contact@abc.vn', 'Tang 8, Toa nha PTIT', 'DANG_THUE'),
+('CT-02', '0102345678', 'Cong ty CP Tai Chinh XYZ', 'Tran Thi B', '0902222222', 'info@xyz.vn', 'Tang 12, Toa nha PTIT', 'DANG_THUE'),
+('CT-03', '0103456789', 'Cong ty TNHH Thuong Mai DEF', 'Le Van C', '0903333333', 'sales@def.vn', 'Tang 5, Toa nha PTIT', 'DANG_THUE'),
+('CT-04', '0104567890', 'Cong ty CP Giao Duc GHI', 'Pham Thi D', '0904444444', 'hello@ghi.vn', 'Tang 3, Toa nha PTIT', 'DANG_THUE'),
+('CT-05', '0105678901', 'Cong ty TNHH Logistics JKL', 'Hoang Van E', '0905555555', 'ops@jkl.vn', 'Tang 10, Toa nha PTIT', 'DA_CHUYEN_DI');
 
 -- ---- VAN_PHONG ----
 INSERT INTO VAN_PHONG (ky_hieu_van_phong, tang, vi_tri, dien_tich, don_gia_m2, trang_thai) VALUES

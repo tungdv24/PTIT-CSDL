@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Nhat ky hoat dong{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>🧾 Nhat ky hoat dong (MongoDB)</h1>
+</div>
+
+{% if not enabled %}
+<div class="flash info">MongoDB chua duoc ket noi - nhat ky dang tat. Kiem tra bien MONGO_URI.</div>
+{% endif %}
+
+<div class="card">
+  <form class="toolbar" method="get">
+    <select name="action">
+      <option value="">-- Tat ca hanh dong --</option>
+      {% for a in actions %}<option value="{{ a }}" {{ 'selected' if a==cur_action }}>{{ a }}</option>{% endfor %}
+    </select>
+    <input name="user" placeholder="Nguoi dung" value="{{ cur_user or '' }}" style="width:160px;">
+    <select name="limit">
+      {% for l in [50,100,200,500] %}<option value="{{ l }}" {{ 'selected' if l==limit }}>{{ l }} dong</option>{% endfor %}
+    </select>
+    <button class="btn secondary">Loc</button>
+  </form>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+  <table>
+    <thead><tr><th>Thoi gian (UTC)</th><th>Nguoi dung</th><th>Vai tro</th><th>Hanh dong</th><th>Doi tuong</th><th>Chi tiet</th><th>IP</th></tr></thead>
+    <tbody>
+      {% for l in logs %}
+      <tr>
+        <td>{{ l.timestamp.strftime('%Y-%m-%d %H:%M:%S') if l.timestamp else '' }}</td>
+        <td>{{ l.user }}</td>
+        <td>{% if l.role %}<span class="badge blue">{{ l.role }}</span>{% endif %}</td>
+        <td>
+          {% set act = l.action %}
+          <span class="badge {{ 'green' if act in ['CREATE','LOGIN','INVOICE_PAID','PAYROLL_PAID','SERVICE_USAGE'] else ('red' if act in ['DELETE','LOGIN_FAILED'] else 'yellow') }}">{{ act }}</span>
+        </td>
+        <td style="color:#64748b;">
+          {% if l.target %}{{ l.target.type }}{% if l.target.id is not none %} #{{ l.target.id }}{% endif %}{% endif %}
+        </td>
+        <td>{{ l.details or '' }}</td>
+        <td style="color:#94a3b8;font-size:12px;">{{ l.ip or '' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" style="text-align:center;color:#64748b;padding:24px;">Chua co nhat ky.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p style="color:#64748b;">{{ logs|length }} ban ghi (moi nhat truoc).</p>
+{% endblock %}

@@ -3,6 +3,7 @@ Flask-Login==0.6.3
 SQLAlchemy==2.0.31
 PyMySQL==1.1.1
 cryptography==43.0.1
+pymongo==4.8.0
 Werkzeug==3.0.3
 gunicorn==22.0.0
 python-dotenv==1.0.1

@@ -10,6 +10,7 @@ USE QuanLyToaNha;
 -- 1. CONG TY
 CREATE TABLE IF NOT EXISTS CONG_TY (
     ma_cong_ty INT AUTO_INCREMENT PRIMARY KEY,
+    ma_so_cong_ty VARCHAR(20) NOT NULL UNIQUE,
     ma_so_thue VARCHAR(20) NOT NULL UNIQUE,
     ten_cong_ty VARCHAR(255) NOT NULL,
     nguoi_dai_dien VARCHAR(100) NOT NULL,
@@ -236,15 +237,24 @@ CREATE TABLE IF NOT EXISTS CHI_PHI_TOA_NHA (
 -- Roles: ADMIN, QUAN_LY, NHAN_VIEN, CONG_TY
 -- ma_cong_ty is nullable, links a CONG_TY-role user to their company.
 -- =====================================================================
+-- Roles:
+--   ADMIN : toan quyen (thay cho QUAN_LY)
+--   BQL   : nhan vien toa nha -> lien ket ma_nhan_vien_toa_nha, xem bang luong
+--   NVCT  : nhan vien cong ty -> lien ket ma_nhan_vien, dang ky + xem su dung cua chinh minh
+--   CONG_TY: dai dien cong ty -> lien ket ma_cong_ty, xem hoa don cua cong ty minh
 CREATE TABLE IF NOT EXISTS NGUOI_DUNG (
     ma_nguoi_dung INT AUTO_INCREMENT PRIMARY KEY,
     ten_dang_nhap VARCHAR(50) NOT NULL UNIQUE,
     mat_khau_hash VARCHAR(255) NOT NULL,
     ho_ten VARCHAR(100) NOT NULL,
-    vai_tro VARCHAR(20) NOT NULL DEFAULT 'NHAN_VIEN',
+    vai_tro VARCHAR(20) NOT NULL DEFAULT 'NVCT',
     ma_cong_ty INT NULL,
+    ma_nhan_vien_toa_nha INT NULL,
+    ma_nhan_vien INT NULL,
     trang_thai VARCHAR(20) DEFAULT 'HOAT_DONG',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_vaitro CHECK (vai_tro IN ('ADMIN','QUAN_LY','NHAN_VIEN','CONG_TY')),
-    FOREIGN KEY (ma_cong_ty) REFERENCES CONG_TY(ma_cong_ty) ON DELETE SET NULL
+    CONSTRAINT chk_vaitro CHECK (vai_tro IN ('ADMIN','BQL','NVCT','CONG_TY')),
+    FOREIGN KEY (ma_cong_ty) REFERENCES CONG_TY(ma_cong_ty) ON DELETE SET NULL,
+    FOREIGN KEY (ma_nhan_vien_toa_nha) REFERENCES NHAN_VIEN_TOA_NHA(ma_nhan_vien_toa_nha) ON DELETE SET NULL,
+    FOREIGN KEY (ma_nhan_vien) REFERENCES NHAN_VIEN_CONG_TY(ma_nhan_vien) ON DELETE SET NULL
 );

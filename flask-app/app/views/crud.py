@@ -23,10 +23,11 @@ def F(name, label, type="text", required=False, options=None, fk=None, help=None
 ENTITIES = {
     "cong-ty": {
         "table": "CONG_TY", "pk": "ma_cong_ty", "title": "Cong ty",
-        "roles": ("QUAN_LY",),
-        "list_cols": [("ma_cong_ty", "Ma"), ("ma_so_thue", "MST"), ("ten_cong_ty", "Ten cong ty"),
+        "roles": (),  # ADMIN only
+        "list_cols": [("ma_cong_ty", "Ma"), ("ma_so_cong_ty", "Ma CT"), ("ma_so_thue", "MST"), ("ten_cong_ty", "Ten cong ty"),
                       ("nguoi_dai_dien", "Dai dien"), ("so_dien_thoai", "SDT"), ("trang_thai", "Trang thai")],
         "fields": [
+            F("ma_so_cong_ty", "Ma so cong ty (dung de dang nhap)", required=True),
             F("ma_so_thue", "Ma so thue", required=True),
             F("ten_cong_ty", "Ten cong ty", required=True),
             F("nguoi_dai_dien", "Nguoi dai dien", required=True),
@@ -38,7 +39,7 @@ ENTITIES = {
     },
     "van-phong": {
         "table": "VAN_PHONG", "pk": "ma_van_phong", "title": "Van phong",
-        "roles": ("QUAN_LY",),
+        "roles": (),  # ADMIN only
         "list_cols": [("ma_van_phong", "Ma"), ("ky_hieu_van_phong", "Ky hieu"), ("tang", "Tang"),
                       ("dien_tich", "Dien tich"), ("don_gia_m2", "Don gia/m2"), ("trang_thai", "Trang thai")],
         "fields": [
@@ -52,7 +53,7 @@ ENTITIES = {
     },
     "dich-vu": {
         "table": "DICH_VU", "pk": "ma_dich_vu", "title": "Dich vu",
-        "roles": ("QUAN_LY",),
+        "roles": (),  # ADMIN only
         "list_cols": [("ma_dich_vu", "Ma"), ("ma_so_dich_vu", "Ma DV"), ("ten_dich_vu", "Ten"),
                       ("loai_dich_vu", "Loai"), ("cach_tinh_phi", "Cach tinh"), ("don_gia_co_ban", "Don gia")],
         "fields": [
@@ -68,7 +69,7 @@ ENTITIES = {
     },
     "vi-tri": {
         "table": "VI_TRI_CONG_VIEC", "pk": "ma_vi_tri", "title": "Vi tri cong viec",
-        "roles": ("QUAN_LY",),
+        "roles": (),  # ADMIN only
         "list_cols": [("ma_vi_tri", "Ma"), ("ma_so_vi_tri", "Ma VT"), ("ten_vi_tri", "Ten vi tri"),
                       ("luong_co_ban", "Luong CB"), ("ty_le_doanh_thu", "% Doanh thu")],
         "fields": [
@@ -81,7 +82,7 @@ ENTITIES = {
     },
     "nhan-vien-toa-nha": {
         "table": "NHAN_VIEN_TOA_NHA", "pk": "ma_nhan_vien_toa_nha", "title": "Nhan vien toa nha",
-        "roles": ("QUAN_LY",),
+        "roles": (),  # ADMIN only
         "list_cols": [("ma_nhan_vien_toa_nha", "Ma"), ("ma_so_nhan_vien", "Ma NV"), ("ho_ten", "Ho ten"),
                       ("gioi_tinh", "Gioi tinh"), ("so_dien_thoai", "SDT"), ("trang_thai", "Trang thai")],
         "fields": [
@@ -97,7 +98,7 @@ ENTITIES = {
     },
     "nhan-vien-cong-ty": {
         "table": "NHAN_VIEN_CONG_TY", "pk": "ma_nhan_vien", "title": "Nhan vien cong ty",
-        "roles": ("QUAN_LY", "NHAN_VIEN"),
+        "roles": (),  # ADMIN only
         "list_cols": [("ma_nhan_vien", "Ma"), ("ma_so_nhan_vien", "Ma NV"), ("ho_ten", "Ho ten"),
                       ("ten_cong_ty", "Cong ty"), ("chuc_vu", "Chuc vu"), ("trang_thai", "Trang thai")],
         "list_join": "LEFT JOIN CONG_TY ct ON ct.ma_cong_ty = t.ma_cong_ty",
@@ -119,7 +120,7 @@ ENTITIES = {
     },
     "hop-dong": {
         "table": "HOP_DONG_THUE", "pk": "ma_hop_dong", "title": "Hop dong thue",
-        "roles": ("QUAN_LY",),
+        "roles": (),  # ADMIN only
         "list_cols": [("ma_hop_dong", "Ma"), ("so_hop_dong", "So HD"), ("ten_cong_ty", "Cong ty"),
                       ("ngay_bat_dau", "Tu"), ("ngay_ket_thuc", "Den"), ("trang_thai", "Trang thai")],
         "list_join": "LEFT JOIN CONG_TY ct ON ct.ma_cong_ty = t.ma_cong_ty",
@@ -136,7 +137,7 @@ ENTITIES = {
     },
     "dang-ky-dich-vu": {
         "table": "DANG_KY_DICH_VU", "pk": "ma_dang_ky", "title": "Dang ky dich vu",
-        "roles": ("QUAN_LY",),
+        "roles": (),  # ADMIN only
         "list_cols": [("ma_dang_ky", "Ma"), ("ten_cong_ty", "Cong ty"), ("ten_dich_vu", "Dich vu"),
                       ("don_gia", "Don gia"), ("trang_thai", "Trang thai")],
         "list_join": "LEFT JOIN CONG_TY ct ON ct.ma_cong_ty=t.ma_cong_ty LEFT JOIN DICH_VU dv ON dv.ma_dich_vu=t.ma_dich_vu",
@@ -154,7 +155,7 @@ ENTITIES = {
     },
     "loai-chi-phi": {
         "table": "LOAI_CHI_PHI", "pk": "ma_loai_chi_phi", "title": "Loai chi phi",
-        "roles": ("QUAN_LY",),
+        "roles": (),  # ADMIN only
         "list_cols": [("ma_loai_chi_phi", "Ma"), ("ten_loai_chi_phi", "Ten loai"), ("mo_ta", "Mo ta")],
         "fields": [
             F("ten_loai_chi_phi", "Ten loai chi phi", required=True),
@@ -163,7 +164,7 @@ ENTITIES = {
     },
     "chi-phi": {
         "table": "CHI_PHI_TOA_NHA", "pk": "ma_chi_phi", "title": "Chi phi toa nha",
-        "roles": ("QUAN_LY",),
+        "roles": (),  # ADMIN only
         "list_cols": [("ma_chi_phi", "Ma"), ("ten_loai_chi_phi", "Loai"), ("noi_dung", "Noi dung"),
                       ("ngay_phat_sinh", "Ngay"), ("so_tien", "So tien")],
         "list_join": "LEFT JOIN LOAI_CHI_PHI lcp ON lcp.ma_loai_chi_phi = t.ma_loai_chi_phi",

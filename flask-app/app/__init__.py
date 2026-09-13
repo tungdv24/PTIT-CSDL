@@ -66,6 +66,10 @@ def create_app():
 
     db.init_engine(cfg.sqlalchemy_url)
 
+    # MongoDB activity logging (NoSQL). Fail-soft if unavailable.
+    from . import mongolog
+    mongolog.init_mongo(cfg.MONGO_URI, cfg.MONGO_DB, cfg.LOG_TTL_DAYS)
+
     # Bootstrap DB schema, seed and users. MySQL may still be starting when the
     # app boots, so retry for up to ~60s before giving up. Only the first
     # gunicorn worker that wins the race actually creates the data; the others
@@ -92,12 +96,16 @@ def create_app():
     from .views.crud import make_crud_blueprints
     from .views.finance import bp as finance_bp
     from .views.dbviewer import bp as dbviewer_bp
+    from .views.usage import bp as usage_bp
+    from .views.activitylog import bp as activitylog_bp
 
     app.register_blueprint(dashboard_bp)
     for bp in make_crud_blueprints():
         app.register_blueprint(bp)
     app.register_blueprint(finance_bp)
     app.register_blueprint(dbviewer_bp)
+    app.register_blueprint(usage_bp)
+    app.register_blueprint(activitylog_bp)
 
     @app.route("/")
     def root():

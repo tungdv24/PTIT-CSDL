@@ -1,8 +1,8 @@
 """Dashboard: revenue/cost/profit KPIs + occupancy + recent activity."""
 import datetime
 
-from flask import Blueprint, render_template, request
-from flask_login import login_required
+from flask import Blueprint, render_template, request, redirect, url_for
+from flask_login import login_required, current_user
 
 from .. import db
 
@@ -12,6 +12,15 @@ bp = Blueprint("dashboard", __name__)
 @bp.route("/dashboard")
 @login_required
 def index():
+    # Dashboard tai chinh toan toa nha chi danh cho ADMIN.
+    # Cac vai tro khac chuyen thang toi trang phu hop.
+    if not current_user.is_admin:
+        if current_user.vai_tro == "BQL":
+            return redirect(url_for("finance.luong_list"))
+        if current_user.vai_tro == "NVCT":
+            return redirect(url_for("usage.list_view"))
+        if current_user.vai_tro == "CONG_TY":
+            return redirect(url_for("finance.hoa_don_list"))
     now = datetime.date.today()
     thang = request.args.get("thang", type=int) or 4
     nam = request.args.get("nam", type=int) or 2026

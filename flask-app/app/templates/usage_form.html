@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Ghi nhan su dung dich vu{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Ghi nhan su dung dich vu</h1>
+  <a class="btn secondary" href="{{ url_for('usage.list_view') }}">← Quay lai</a>
+</div>
+<div class="card" style="max-width:640px;">
+  <form method="post" id="usage-form">
+    <label>Cong ty <span style="color:#dc2626;">*</span></label>
+    <select id="cong_ty" required {{ 'disabled' if own_company }}>
+      {% if not own_company %}<option value="">-- Chon cong ty --</option>{% endif %}
+      {% for c in cong_tys %}<option value="{{ c.ma_cong_ty }}" {{ 'selected' if own_company==c.ma_cong_ty }}>{{ c.ten_cong_ty }}</option>{% endfor %}
+    </select>
+
+    <label>Nhan vien <span style="color:#dc2626;">*</span></label>
+    <select name="ma_nhan_vien" id="nhan_vien" required disabled>
+      <option value="">-- Chon cong ty truoc --</option>
+    </select>
+
+    <label>Dich vu (theo luot) <span style="color:#dc2626;">*</span></label>
+    <select name="ma_dang_ky" id="dang_ky" required disabled>
+      <option value="">-- Chon cong ty truoc --</option>
+    </select>
+
+    <label>Ngay su dung <span style="color:#dc2626;">*</span></label>
+    <input type="date" name="ngay_su_dung" value="{{ today }}" required>
+
+    <label>So luong <span style="color:#dc2626;">*</span></label>
+    <input type="number" step="any" name="so_luong" value="1" required>
+
+    <label>Don gia <span style="color:#dc2626;">*</span></label>
+    <input type="number" step="any" name="don_gia" id="don_gia" required>
+
+    <label>Ghi chu</label>
+    <input type="text" name="ghi_chu" placeholder="VD: Suat an trua, Gui xe oto...">
+
+    <div style="margin-top:20px;">
+      <button class="btn">Ghi nhan</button>
+    </div>
+  </form>
+</div>
+
+<script>
+const congTy = document.getElementById('cong_ty');
+const nhanVien = document.getElementById('nhan_vien');
+const dangKy = document.getElementById('dang_ky');
+const donGia = document.getElementById('don_gia');
+const dangKyPrices = {};
+
+async function loadCompany() {
+  const id = congTy.value;
+  nhanVien.innerHTML = '<option value="">-- Dang tai --</option>';
+  dangKy.innerHTML = '<option value="">-- Dang tai --</option>';
+  nhanVien.disabled = true; dangKy.disabled = true;
+  if (!id) return;
+  try {
+    const res = await fetch(`{{ url_for('usage.api_cong_ty', ma_cong_ty=0) }}`.replace('/0', '/' + id));
+    const data = await res.json();
+    nhanVien.innerHTML = '<option value="">-- Chon nhan vien --</option>';
+    data.nhan_vien.forEach(n => {
+      nhanVien.innerHTML += `<option value="${n.ma_nhan_vien}">${n.ho_ten} (${n.ma_so_nhan_vien})</option>`;
+    });
+    dangKy.innerHTML = '<option value="">-- Chon dich vu --</option>';
+    data.dang_ky.forEach(d => {
+      dangKyPrices[d.ma_dang_ky] = d.don_gia;
+      dangKy.innerHTML += `<option value="${d.ma_dang_ky}">${d.ten_dich_vu} (${d.don_gia.toLocaleString('vi-VN')} đ)</option>`;
+    });
+    nhanVien.disabled = false; dangKy.disabled = false;
+    if (data.nhan_vien.length === 0) nhanVien.innerHTML = '<option value="">(Cong ty chua co nhan vien hoat dong)</option>';
+    if (data.dang_ky.length === 0) dangKy.innerHTML = '<option value="">(Cong ty chua dang ky dich vu theo luot)</option>';
+  } catch (e) {
+    nhanVien.innerHTML = '<option value="">Loi tai du lieu</option>';
+  }
+}
+
+congTy.addEventListener('change', loadCompany);
+
+// Auto-fill don_gia when a service is picked.
+dangKy.addEventListener('change', () => {
+  const price = dangKyPrices[dangKy.value];
+  if (price !== undefined) donGia.value = price;
+});
+
+// Neu cong ty da duoc chon san (user CONG_TY), tu dong tai ngay.
+if (congTy.value) { loadCompany(); }
+</script>
+{% endblock %}

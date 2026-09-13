@@ -50,7 +50,11 @@
 <div class="layout">
   <aside class="sidebar">
     <div class="brand">🏢 Quan ly toa nha</div>
+    {% set role = current_user.vai_tro %}
+    {% set is_admin = current_user.is_admin %}
     <a href="{{ url_for('dashboard.index') }}">📊 Dashboard</a>
+
+    {% if is_admin %}
     <div class="group">Quan ly</div>
     <a href="{{ url_for('crud_cong_ty.list_view') }}">Cong ty</a>
     <a href="{{ url_for('crud_van_phong.list_view') }}">Van phong</a>
@@ -58,18 +62,34 @@
     <a href="{{ url_for('crud_nhan_vien_cong_ty.list_view') }}">Nhan vien cong ty</a>
     <a href="{{ url_for('crud_nhan_vien_toa_nha.list_view') }}">Nhan vien toa nha</a>
     <a href="{{ url_for('crud_vi_tri.list_view') }}">Vi tri cong viec</a>
+
     <div class="group">Dich vu</div>
     <a href="{{ url_for('crud_dich_vu.list_view') }}">Danh muc dich vu</a>
     <a href="{{ url_for('crud_dang_ky_dich_vu.list_view') }}">Dang ky dich vu</a>
+    <a href="{{ url_for('usage.list_view') }}">Su dung dich vu (ngay)</a>
+
     <div class="group">Tai chinh</div>
     <a href="{{ url_for('finance.hoa_don_list') }}">Hoa don</a>
-    <a href="{{ url_for('finance.luong_list') }}">Luong nhan vien</a>
+    <a href="{{ url_for('finance.luong_list') }}">Luong nhan vien toa nha</a>
     <a href="{{ url_for('crud_loai_chi_phi.list_view') }}">Loai chi phi</a>
     <a href="{{ url_for('crud_chi_phi.list_view') }}">Chi phi toa nha</a>
     <a href="{{ url_for('finance.bao_cao') }}">Bao cao Lai/Lo</a>
-    {% if current_user.is_admin %}
+
     <div class="group">He thong</div>
+    <a href="{{ url_for('activitylog.index') }}">🧾 Nhat ky hoat dong</a>
     <a href="{{ url_for('dbviewer.index') }}">🗄️ Xem CSDL</a>
+
+    {% elif role == 'BQL' %}
+    <div class="group">Nhan vien toa nha</div>
+    <a href="{{ url_for('finance.luong_list') }}">Luong cua toi</a>
+
+    {% elif role == 'NVCT' %}
+    <div class="group">Dich vu cua toi</div>
+    <a href="{{ url_for('usage.list_view') }}">Dang ky su dung dich vu</a>
+
+    {% elif role == 'CONG_TY' %}
+    <div class="group">Cong ty cua toi</div>
+    <a href="{{ url_for('finance.hoa_don_list') }}">Hoa don cua cong ty</a>
     {% endif %}
   </aside>
   <div class="main">

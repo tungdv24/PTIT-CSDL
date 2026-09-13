@@ -20,8 +20,9 @@ bp = Blueprint("finance", __name__)
 # Invoices
 # --------------------------------------------------------------------------
 @bp.route("/hoa-don")
-@login_required
+@roles_required("CONG_TY")
 def hoa_don_list():
+    # Chi ADMIN (tat ca) va CONG_TY (cua cong ty minh) duoc xem hoa don.
     thang = request.args.get("thang", type=int) or 4
     nam = request.args.get("nam", type=int) or 2026
     where = "WHERE hd.thang=:t AND hd.nam=:n"
@@ -40,7 +41,7 @@ def hoa_don_list():
 
 
 @bp.route("/hoa-don/<int:ma_hoa_don>")
-@login_required
+@roles_required("CONG_TY")
 def hoa_don_detail(ma_hoa_don):
     hd = db.query_one(
         """SELECT hd.*, ct.ten_cong_ty, ct.ma_so_thue, ct.dia_chi
@@ -51,6 +52,10 @@ def hoa_don_detail(ma_hoa_don):
     if not hd:
         flash("Khong tim thay hoa don.", "danger")
         return redirect(url_for("finance.hoa_don_list"))
+    # CONG_TY chi duoc xem hoa don cua chinh cong ty minh.
+    if current_user.vai_tro == "CONG_TY" and hd["ma_cong_ty"] != current_user.ma_cong_ty:
+        from flask import abort
+        abort(403)
     chi_tiet = db.query_all(
         "SELECT * FROM CHI_TIET_HOA_DON WHERE ma_hoa_don=:id", {"id": ma_hoa_don}
     )
@@ -58,7 +63,7 @@ def hoa_don_detail(ma_hoa_don):
 
 
 @bp.route("/hoa-don/<int:ma_hoa_don>/thanh-toan", methods=["POST"])
-@roles_required("QUAN_LY")
+@roles_required()  # ADMIN only
 def hoa_don_thanh_toan(ma_hoa_don):
     db.execute(
         "UPDATE HOA_DON SET trang_thai_thanh_toan='DA_THANH_TOAN' WHERE ma_hoa_don=:id",
@@ -69,7 +74,7 @@ def hoa_don_thanh_toan(ma_hoa_don):
 
 
 @bp.route("/hoa-don/tao-thang", methods=["POST"])
-@roles_required("QUAN_LY")
+@roles_required()  # ADMIN only
 def hoa_don_tao_thang():
     thang = request.form.get("thang", type=int)
     nam = request.form.get("nam", type=int)
@@ -192,21 +197,31 @@ def hoa_don_tao_thang():
 # Payroll
 # --------------------------------------------------------------------------
 @bp.route("/luong")
-@login_required
+@roles_required("BQL")
 def luong_list():
+    # ADMIN xem luong tat ca nhan vien toa nha.
+    # BQL chi xem luong cua CHINH MINH.
+    # NVCT / CONG_TY khong duoc xem.
     thang = request.args.get("thang", type=int) or 4
     nam = request.args.get("nam", type=int) or 2026
+    where = "WHERE l.thang=:t AND l.nam=:n"
+    params = {"t": thang, "n": nam}
+    is_self = False
+    if current_user.vai_tro == "BQL" and current_user.ma_nhan_vien_toa_nha:
+        where += " AND l.ma_nhan_vien_toa_nha=:me"
+        params["me"] = current_user.ma_nhan_vien_toa_nha
+        is_self = True
     rows = db.query_all(
-        """SELECT l.*, nv.ho_ten, nv.ma_so_nhan_vien FROM LUONG_NHAN_VIEN l
-           JOIN NHAN_VIEN_TOA_NHA nv ON nv.ma_nhan_vien_toa_nha=l.ma_nhan_vien_toa_nha
-           WHERE l.thang=:t AND l.nam=:n ORDER BY l.tong_luong DESC""",
-        {"t": thang, "n": nam},
+        f"""SELECT l.*, nv.ho_ten, nv.ma_so_nhan_vien FROM LUONG_NHAN_VIEN l
+            JOIN NHAN_VIEN_TOA_NHA nv ON nv.ma_nhan_vien_toa_nha=l.ma_nhan_vien_toa_nha
+            {where} ORDER BY l.tong_luong DESC""",
+        params,
     )
-    return render_template("luong_list.html", rows=rows, thang=thang, nam=nam)
+    return render_template("luong_list.html", rows=rows, thang=thang, nam=nam, is_self=is_self)
 
 
 @bp.route("/luong/tinh-thang", methods=["POST"])
-@roles_required("QUAN_LY")
+@roles_required()  # ADMIN only
 def luong_tinh_thang():
     thang = request.form.get("thang", type=int)
     nam = request.form.get("nam", type=int)
@@ -264,7 +279,7 @@ def luong_tinh_thang():
 
 
 @bp.route("/luong/<int:ma_luong>/chi", methods=["POST"])
-@roles_required("QUAN_LY")
+@roles_required()  # ADMIN only
 def luong_chi(ma_luong):
     db.execute("UPDATE LUONG_NHAN_VIEN SET trang_thai='DA_CHI' WHERE ma_luong=:id", {"id": ma_luong})
     flash("Da danh dau da chi luong.", "success")
@@ -275,7 +290,7 @@ def luong_chi(ma_luong):
 # Reports (P&L)
 # --------------------------------------------------------------------------
 @bp.route("/bao-cao")
-@login_required
+@roles_required()
 def bao_cao():
     nam = request.args.get("nam", type=int) or 2026
     data = []
