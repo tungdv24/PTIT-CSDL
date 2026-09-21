@@ -148,9 +148,14 @@ def bootstrap_users_all_nodes(admin_password: str):
 def _users_for_node(kv: str):
     """Sinh danh sach user tu du lieu thuc te tren node (theo cong ty/nhan vien co san)."""
     users = []
+    # Moi node deu co 1 admin de xem/quan ly toan bo DB CUA CHI NHANH do.
+    # ADMIN o HN = tru so (co them bao cao tong hop toan quoc).
+    # ADMIN o DN/HCM = admin chi nhanh (chi trong node cua minh).
+    ten_admin = {"HN": "Quan tri Tru so HN", "DN": "Quan tri Chi nhanh Da Nang",
+                 "HCM": "Quan tri Chi nhanh TP.HCM"}.get(kv, f"Quan tri {kv}")
+    users.append(("admin", ten_admin, "ADMIN", None, None, None))
     if kv == "HN":
-        users.append(("admin", "Quan tri he thong (Tru so HN)", "ADMIN", None, None, None))
-        # BQL dung chung (nhan vien toa nha nhan ban o moi node) - tao o HN
+        # BQL (nhan vien toa nha nhan ban o moi node) - tao o HN
         for r in db.query_all("SELECT ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten FROM NHAN_VIEN_TOA_NHA ORDER BY ma_nhan_vien_toa_nha", khu_vuc=kv):
             users.append((r["ma_so_nhan_vien"], r["ho_ten"], "BQL", None, r["ma_nhan_vien_toa_nha"], None))
     # NVCT + CONG_TY theo cong ty co tren node nay
