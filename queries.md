@@ -424,3 +424,201 @@ docker exec office_mysql mysqldump -uroot -p"$MYSQL_PASSWORD" QuanLyToaNha > bac
 # Phuc hoi tu file backup
 docker exec -i office_mysql mysql -uroot -p"$MYSQL_PASSWORD" QuanLyToaNha < backup_2026-09-09.sql
 ```
+
+
+---
+
+# PHAN G. TRIGGER & TRANSACTION (STORED PROCEDURE)
+
+Toan bo logic nghiep vu (tinh hoa don, tinh luong...) da duoc chuyen tu tang ung dung
+(Python) **xuong CSDL** duoi dang **trigger** va **stored procedure**. App chi con goi `CALL`.
+Cac lenh nay dat trong file `flask-app/sql/procedures.sql` va tu dong nap khi khoi dong app.
+
+Xem nhanh danh sach da cai:
+```sql
+-- Danh sach trigger
+SELECT TRIGGER_NAME, ACTION_TIMING, EVENT_MANIPULATION, EVENT_OBJECT_TABLE
+FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='QuanLyToaNha';
+
+-- Danh sach stored procedure
+SELECT ROUTINE_NAME, ROUTINE_TYPE FROM information_schema.ROUTINES
+WHERE ROUTINE_SCHEMA='QuanLyToaNha' AND ROUTINE_TYPE='PROCEDURE';
+
+-- Xem lai code mot trigger / procedure
+SHOW CREATE TRIGGER trg_cthd_after_insert;
+SHOW CREATE PROCEDURE sp_tao_hoa_don_thang;
+```
+
+## G.1. DANH SACH TRIGGER (6)
+
+| Trigger | Chay khi | Tac dung |
+|---------|----------|----------|
+| `trg_cthd_after_insert` | AFTER INSERT tren `CHI_TIET_HOP_DONG` | Them van phong vao hop dong -> van phong chuyen `DA_THUE` |
+| `trg_cthd_after_delete` | AFTER DELETE tren `CHI_TIET_HOP_DONG` | Xoa chi tiet hop dong -> van phong tra ve `TRONG` |
+| `trg_cthd_no_change_vp` | BEFORE UPDATE tren `CHI_TIET_HOP_DONG` | Chan doi `ma_van_phong` cua chi tiet hop dong da tao (bao loi) |
+| `trg_quanly_no_self` | BEFORE INSERT tren `QUAN_LY_NHAN_VIEN` | Chan nhan vien tu quan ly chinh minh |
+| `trg_sudung_check_company` | BEFORE INSERT tren `SU_DUNG_DICH_VU` | Chan neu nhan vien khong thuoc cong ty da dang ky dich vu |
+| `trg_hoadon_before_insert` | BEFORE INSERT tren `HOA_DON` | Tu tinh `tong_tien = tien_thue + tien_dich_vu` |
+| `trg_hoadon_before_update` | BEFORE UPDATE tren `HOA_DON` | Tinh lai `tong_tien` khi cap nhat |
+
+**Y nghia:** trigger giup CSDL tu bao ve tinh toan ven — tu cap nhat trang thai van phong,
+tu tinh tong tien, va tu chan du lieu sai (khong phu thuoc tang ung dung).
+
+### Ma nguon trigger
+
+```sql
+-- 1) Them van phong vao hop dong -> DA_THUE
+CREATE TRIGGER trg_cthd_after_insert
+AFTER INSERT ON CHI_TIET_HOP_DONG
+FOR EACH ROW
+    UPDATE VAN_PHONG SET trang_thai = 'DA_THUE'
+    WHERE ma_van_phong = NEW.ma_van_phong;
+
+-- 2) Xoa chi tiet hop dong -> TRONG
+CREATE TRIGGER trg_cthd_after_delete
+AFTER DELETE ON CHI_TIET_HOP_DONG
+FOR EACH ROW
+    UPDATE VAN_PHONG SET trang_thai = 'TRONG'
+    WHERE ma_van_phong = OLD.ma_van_phong;
+
+-- 2b) Khong cho doi van phong cua chi tiet hop dong da tao
+DELIMITER $$
+CREATE TRIGGER trg_cthd_no_change_vp
+BEFORE UPDATE ON CHI_TIET_HOP_DONG
+FOR EACH ROW
+BEGIN
+    IF NEW.ma_van_phong <> OLD.ma_van_phong THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Khong the doi van phong cua chi tiet hop dong. Hay xoa dong nay va them dong moi.';
+    END IF;
+END$$
+DELIMITER ;
+
+-- 3) Chan tu quan ly chinh minh
+DELIMITER $$
+CREATE TRIGGER trg_quanly_no_self
+BEFORE INSERT ON QUAN_LY_NHAN_VIEN
+FOR EACH ROW
+BEGIN
+    IF NEW.ma_nhan_vien = NEW.ma_nguoi_quan_ly THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Nhan vien khong the tu quan ly chinh minh';
+    END IF;
+END$$
+DELIMITER ;
+
+-- 4) Nhan vien dung dich vu phai dung cong ty da dang ky
+DELIMITER $$
+CREATE TRIGGER trg_sudung_check_company
+BEFORE INSERT ON SU_DUNG_DICH_VU
+FOR EACH ROW
+BEGIN
+    DECLARE v_cty_nv INT; DECLARE v_cty_dk INT;
+    SELECT ma_cong_ty INTO v_cty_nv FROM NHAN_VIEN_CONG_TY WHERE ma_nhan_vien = NEW.ma_nhan_vien;
+    SELECT ma_cong_ty INTO v_cty_dk FROM DANG_KY_DICH_VU WHERE ma_dang_ky = NEW.ma_dang_ky;
+    IF v_cty_nv IS NULL OR v_cty_dk IS NULL OR v_cty_nv <> v_cty_dk THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Nhan vien khong thuoc cong ty da dang ky dich vu nay';
+    END IF;
+END$$
+DELIMITER ;
+
+-- 5) & 6) Tu tinh tong_tien cho hoa don
+CREATE TRIGGER trg_hoadon_before_insert
+BEFORE INSERT ON HOA_DON
+FOR EACH ROW
+    SET NEW.tong_tien = COALESCE(NEW.tien_thue_van_phong,0) + COALESCE(NEW.tien_dich_vu,0);
+
+CREATE TRIGGER trg_hoadon_before_update
+BEFORE UPDATE ON HOA_DON
+FOR EACH ROW
+    SET NEW.tong_tien = COALESCE(NEW.tien_thue_van_phong,0) + COALESCE(NEW.tien_dich_vu,0);
+```
+
+### Cach kiem chung trigger (demo)
+
+```sql
+-- Trigger 1: them chi tiet hop dong -> van phong DA_THUE
+SELECT trang_thai FROM VAN_PHONG WHERE ma_van_phong = 2;   -- truoc
+INSERT INTO CHI_TIET_HOP_DONG (ma_hop_dong, ma_van_phong, don_gia_thue_m2, ngay_bat_dau, ngay_ket_thuc)
+VALUES (1, 2, 280000, '2026-05-01', '2026-12-31');
+SELECT trang_thai FROM VAN_PHONG WHERE ma_van_phong = 2;   -- sau -> DA_THUE
+
+-- Trigger 2b: doi van phong cua chi tiet hop dong -> bao loi
+UPDATE CHI_TIET_HOP_DONG SET ma_van_phong = 2 WHERE ma_chi_tiet = 1;   -- ERROR 1644: Khong the doi van phong...
+-- (sua truong khac van OK)
+UPDATE CHI_TIET_HOP_DONG SET don_gia_thue_m2 = 330000 WHERE ma_chi_tiet = 1;   -- OK
+
+-- Trigger 3: tu quan ly -> bao loi
+INSERT INTO QUAN_LY_NHAN_VIEN (ma_nhan_vien, ma_nguoi_quan_ly, ngay_bat_dau)
+VALUES (1, 1, '2026-01-01');   -- ERROR 1644: Nhan vien khong the tu quan ly chinh minh
+
+-- Trigger 4: nv cong ty 2 dung dich vu cong ty 1 -> bao loi
+INSERT INTO SU_DUNG_DICH_VU (ma_nhan_vien, ma_dang_ky, ngay_su_dung, so_luong, don_gia)
+VALUES (3, 2, '2026-05-01', 1, 45000);   -- ERROR 1644: khong thuoc cong ty da dang ky
+
+-- Trigger 5: tong_tien tu tinh
+INSERT INTO HOA_DON (so_hoa_don, ma_cong_ty, thang, nam, tien_thue_van_phong, tien_dich_vu)
+VALUES ('INV-TEST', 1, 5, 2026, 10000000, 500000);
+SELECT tong_tien FROM HOA_DON WHERE so_hoa_don='INV-TEST';   -- 10.500.000 (tu tinh)
+```
+
+## G.2. DANH SACH STORED PROCEDURE / TRANSACTION (6)
+
+Moi procedure la mot **giao dich (transaction)**: cac lenh ben trong `START TRANSACTION ... COMMIT`,
+co `EXIT HANDLER FOR SQLEXCEPTION ... ROLLBACK` -> loi giua chung se **huy toan bo** (tinh nguyen tu/ACID).
+
+| Procedure | Tham so | Tac dung |
+|-----------|---------|----------|
+| `sp_tao_hoa_don_thang` | (ma_cong_ty, thang, nam, OUT ma_hoa_don) | Tao hoa don 1 cong ty: header + chi tiet (thue + dich vu) trong 1 giao dich |
+| `sp_tao_hoa_don_tat_ca` | (thang, nam, OUT so_tao) | Lap qua moi cong ty dang thue, goi `sp_tao_hoa_don_thang` |
+| `sp_tinh_luong_thang` | (thang, nam, OUT so_tao) | Tinh luong moi nhan vien co phan cong: luong CB + thuong % doanh thu |
+| `sp_ghi_su_dung_dich_vu` | (ma_nhan_vien, ma_dang_ky, ngay, so_luong, don_gia, ghi_chu, OUT ma_su_dung) | Ghi 1 luot dung dich vu |
+| `sp_thanh_ly_hop_dong` | (ma_hop_dong) | Doi hop dong `DA_THANH_LY` + tra cac van phong ve `TRONG` |
+| `sp_thanh_toan_hoa_don` | (ma_hoa_don) | Danh dau hoa don `DA_THANH_TOAN` |
+
+**App goi cac procedure nay:**
+- Tao hoa don thang (nut tren web) -> `CALL sp_tao_hoa_don_tat_ca(...)`
+- Tinh luong thang -> `CALL sp_tinh_luong_thang(...)`
+- Ghi su dung dich vu -> `CALL sp_ghi_su_dung_dich_vu(...)`
+- Thanh toan hoa don -> `CALL sp_thanh_toan_hoa_don(...)`
+
+### Vi du goi (CALL) tren MySQL
+
+```sql
+-- Tao hoa don thang 4/2026 cho MOT cong ty (ma_cong_ty=1)
+CALL sp_tao_hoa_don_thang(1, 4, 2026, @ma_hd);
+SELECT @ma_hd AS ma_hoa_don_vua_tao;
+
+-- Tao hoa don thang 4/2026 cho TAT CA cong ty dang thue
+CALL sp_tao_hoa_don_tat_ca(4, 2026, @so_tao);
+SELECT @so_tao AS so_hoa_don_da_tao;
+
+-- Tinh luong thang 4/2026
+CALL sp_tinh_luong_thang(4, 2026, @so_bang_luong);
+SELECT @so_bang_luong AS so_bang_luong_da_tinh;
+
+-- Ghi mot luot su dung dich vu (nhan vien 1, dang ky 2 = an trua)
+CALL sp_ghi_su_dung_dich_vu(1, 2, '2026-04-20', 1, 45000, 'Suat an trua', @ma_sd);
+SELECT @ma_sd AS ma_su_dung;
+
+-- Thanh ly hop dong so 4 (tra van phong ve TRONG)
+CALL sp_thanh_ly_hop_dong(4);
+
+-- Thanh toan hoa don
+CALL sp_thanh_toan_hoa_don(1);
+```
+
+### Vi du ma nguon mot procedure (rut gon) — minh hoa transaction
+
+```sql
+CREATE PROCEDURE sp_thanh_ly_hop_dong(IN p_ma_hop_dong INT)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;  -- loi -> ROLLBACK
+    START TRANSACTION;
+        UPDATE HOP_DONG_THUE SET trang_thai='DA_THANH_LY' WHERE ma_hop_dong=p_ma_hop_dong;
+        UPDATE VAN_PHONG SET trang_thai='TRONG'
+        WHERE ma_van_phong IN (SELECT ma_van_phong FROM CHI_TIET_HOP_DONG WHERE ma_hop_dong=p_ma_hop_dong);
+    COMMIT;   -- ca 2 UPDATE cung thanh cong hoac cung bi huy
+END;
+```
+
+> Code day du cua tat ca trigger + procedure: xem file `flask-app/sql/procedures.sql`.

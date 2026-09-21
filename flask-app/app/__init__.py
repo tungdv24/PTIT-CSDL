@@ -48,6 +48,45 @@ def _init_schema(cfg: Config):
                     continue
                 conn.execute(text(stmt))
 
+    def run_sql_file_delim(path: str):
+        """Loader ho tro cu phap DELIMITER (dung cho triggers/procedures).
+
+        Xu ly cac khoi `DELIMITER $$ ... $$ DELIMITER ;` roi thuc thi tung lenh
+        qua raw DBAPI connection (moi lenh mot lan execute).
+        """
+        if not os.path.exists(path):
+            return
+        with open(path, "r", encoding="utf-8") as fh:
+            lines = fh.readlines()
+        delimiter = ";"
+        buffer = ""
+        statements = []
+        for line in lines:
+            stripped = line.strip()
+            if stripped.upper().startswith("DELIMITER "):
+                delimiter = stripped.split(None, 1)[1].strip()
+                continue
+            buffer += line
+            if buffer.rstrip().endswith(delimiter):
+                stmt = buffer.rstrip()
+                stmt = stmt[: -len(delimiter)] if delimiter != ";" else stmt[:-1]
+                stmt = stmt.strip()
+                if stmt:
+                    upper = stmt.upper()
+                    if not (upper.startswith("USE ") or upper.startswith("CREATE DATABASE")
+                            or upper.startswith("--")):
+                        statements.append(stmt)
+                buffer = ""
+        raw = db.get_engine().raw_connection()
+        try:
+            cur = raw.cursor()
+            for stmt in statements:
+                cur.execute(stmt)
+            cur.close()
+            raw.commit()
+        finally:
+            raw.close()
+
     run_sql_file(schema_path)
 
     # Seed only if there is no data yet.
@@ -57,6 +96,14 @@ def _init_schema(cfg: Config):
         count = 0
     if not count:
         run_sql_file(seed_path)
+
+    # Triggers + stored procedures (idempotent: DROP IF EXISTS trong file).
+    proc_path = os.path.join(base, "sql", "procedures.sql")
+    try:
+        run_sql_file_delim(proc_path)
+    except Exception as exc:  # pragma: no cover
+        import logging
+        logging.getLogger(__name__).warning("procedures.sql load failed: %s", exc)
 
 
 def create_app():

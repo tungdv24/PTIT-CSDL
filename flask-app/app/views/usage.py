@@ -133,31 +133,21 @@ def create_view():
             flash("Vui long chon dich vu, ngay va don gia.", "danger")
             return redirect(url_for("usage.create_view"))
 
-        # Rang buoc nghiep vu: nhan vien phai thuoc dung cong ty da dang ky dich vu.
-        ok = db.query_one(
-            """SELECT nv.ma_cong_ty AS ma_cong_ty FROM NHAN_VIEN_CONG_TY nv
-               JOIN DANG_KY_DICH_VU dk ON dk.ma_cong_ty = nv.ma_cong_ty
-               WHERE nv.ma_nhan_vien=:nv AND dk.ma_dang_ky=:dk""",
-            {"nv": ma_nhan_vien, "dk": ma_dang_ky},
-        )
-        if not ok:
-            flash("Nhan vien khong thuoc cong ty da dang ky dich vu nay.", "danger")
-            return redirect(url_for("usage.create_view"))
-
+        # Goi stored procedure ghi nhan su dung (mot giao dich).
+        # Rang buoc "nhan vien phai thuoc dung cong ty dang ky" duoc trigger
+        # trg_sudung_check_company kiem tra o phia CSDL.
         try:
-            new_id = db.execute(
-                """INSERT INTO SU_DUNG_DICH_VU (ma_nhan_vien, ma_dang_ky, ngay_su_dung, so_luong, don_gia, ghi_chu)
-                   VALUES (:nv,:dk,:ngay,:sl,:dg,:gc)""",
-                {"nv": ma_nhan_vien, "dk": ma_dang_ky, "ngay": ngay,
-                 "sl": so_luong, "dg": don_gia, "gc": ghi_chu},
-            )
+            out = db.call_proc("sp_ghi_su_dung_dich_vu",
+                               [ma_nhan_vien, ma_dang_ky, ngay, so_luong, don_gia, ghi_chu, 0])
+            new_id = out[6]
             mongolog.log("SERVICE_USAGE", "SU_DUNG_DICH_VU", new_id,
                          f"Ghi nhan su dung dich vu: nhan_vien={ma_nhan_vien}, "
                          f"dang_ky={ma_dang_ky}, ngay={ngay}, so_luong={so_luong}, don_gia={don_gia}")
             flash("Da ghi nhan su dung dich vu.", "success")
             return redirect(url_for("usage.list_view"))
-        except SQLAlchemyError as exc:
-            flash(f"Loi: {getattr(exc, 'orig', exc)}", "danger")
+        except Exception as exc:
+            msg = getattr(exc, "orig", exc)
+            flash(f"Loi: {msg}", "danger")
 
     self_nv = _self_employee()
     if self_nv:

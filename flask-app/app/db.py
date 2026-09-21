@@ -47,3 +47,22 @@ def execute(sql: str, params: dict | None = None):
 def scalar(sql: str, params: dict | None = None):
     with get_engine().connect() as conn:
         return conn.execute(text(sql), params or {}).scalar()
+
+
+def call_proc(name: str, args: list):
+    """Goi stored procedure qua DBAPI callproc.
+
+    `args` la danh sach tham so IN (va cho OUT dung 0 lam placeholder).
+    Tra ve danh sach gia tri tham so sau khi goi (OUT da duoc dien).
+    Vi du: out = call_proc("sp_tao_hoa_don_thang", [ma_cty, thang, nam, 0])
+           ma_hoa_don = out[3]
+    """
+    raw = get_engine().raw_connection()
+    try:
+        cur = raw.cursor()
+        result_args = cur.callproc(name, args)
+        cur.close()
+        raw.commit()
+        return list(result_args)
+    finally:
+        raw.close()

@@ -18,6 +18,7 @@ venv/
 
 # DB backups
 backup_*.sql
+backup-centralized/
 
 # Internal / planning docs (not published)
 AGENT.md
