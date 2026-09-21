@@ -154,10 +154,10 @@ def _users_for_node(kv: str):
     ten_admin = {"HN": "Quan tri Tru so HN", "DN": "Quan tri Chi nhanh Da Nang",
                  "HCM": "Quan tri Chi nhanh TP.HCM"}.get(kv, f"Quan tri {kv}")
     users.append(("admin", ten_admin, "ADMIN", None, None, None))
-    if kv == "HN":
-        # BQL (nhan vien toa nha nhan ban o moi node) - tao o HN
-        for r in db.query_all("SELECT ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten FROM NHAN_VIEN_TOA_NHA ORDER BY ma_nhan_vien_toa_nha", khu_vuc=kv):
-            users.append((r["ma_so_nhan_vien"], r["ho_ten"], "BQL", None, r["ma_nhan_vien_toa_nha"], None))
+    # BQL: nhan vien toa nha da PHAN MANH theo khu vuc -> tao user BQL cho nhan vien
+    # co tren CHINH node nay (moi node co nhan vien vung minh).
+    for r in db.query_all("SELECT ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten FROM NHAN_VIEN_TOA_NHA ORDER BY ma_nhan_vien_toa_nha", khu_vuc=kv):
+        users.append((r["ma_so_nhan_vien"], r["ho_ten"], "BQL", None, r["ma_nhan_vien_toa_nha"], None))
     # NVCT + CONG_TY theo cong ty co tren node nay
     for ct in db.query_all("SELECT ma_cong_ty, ma_so_cong_ty, ten_cong_ty FROM CONG_TY ORDER BY ma_cong_ty", khu_vuc=kv):
         users.append((ct["ma_so_cong_ty"], f"Dai dien {ct['ten_cong_ty']}", "CONG_TY", ct["ma_cong_ty"], None, None))

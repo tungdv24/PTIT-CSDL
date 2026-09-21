@@ -46,6 +46,22 @@ ENTITIES = {
             F("trang_thai", "Trang thai", type="select", options=["TRONG", "DA_THUE", "BAO_TRI"]),
         ],
     },
+    "nhan-vien-toa-nha": {
+        "table": "NHAN_VIEN_TOA_NHA", "pk": "ma_nhan_vien_toa_nha", "title": "Nhan vien toa nha",
+        "list_cols": [("ma_nhan_vien_toa_nha", "Ma"), ("ma_so_nhan_vien", "Ma NV"), ("ho_ten", "Ho ten"),
+                      ("khu_vuc", "Khu vuc"), ("so_dien_thoai", "SDT"), ("trang_thai", "Trang thai")],
+        "fields": [
+            F("ma_so_nhan_vien", "Ma so nhan vien", required=True),
+            F("ho_ten", "Ho ten", required=True),
+            F("ngay_sinh", "Ngay sinh", type="date"),
+            F("gioi_tinh", "Gioi tinh", type="select", options=["NAM", "NU", "KHAC"]),
+            F("so_dien_thoai", "So dien thoai", required=True),
+            F("email", "Email"),
+            F("khu_vuc", "Khu vuc", type="select", options=["HN", "DN", "HCM"], required=True),
+            F("ngay_vao_lam", "Ngay vao lam", type="date", required=True),
+            F("trang_thai", "Trang thai", type="select", options=["DANG_LAM", "DA_NGHI"]),
+        ],
+    },
     "nhan-vien-cong-ty": {
         "table": "NHAN_VIEN_CONG_TY", "pk": "ma_nhan_vien", "title": "Nhan vien cong ty",
         "list_cols": [("ma_nhan_vien", "Ma"), ("ma_so_nhan_vien", "Ma NV"), ("ho_ten", "Ho ten"),

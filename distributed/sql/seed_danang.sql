@@ -4,6 +4,10 @@
 -- =====================================================================
 USE QuanLyToaNha;
 
+-- Nhan vien toa nha khu vuc DN (BQL-003)
+INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, ngay_sinh, gioi_tinh, so_dien_thoai, email, khu_vuc, ngay_vao_lam, trang_thai) VALUES
+(3,'BQL-003','Bui Van Tung','1992-11-05','NAM','0913333333','tung@toanha.vn','DN','2021-06-10','DANG_LAM');
+
 INSERT INTO CONG_TY (ma_cong_ty, ma_so_cong_ty, ma_so_thue, ten_cong_ty, nguoi_dai_dien, so_dien_thoai, email, dia_chi, khu_vuc, trang_thai) VALUES
 (2,'CT-02','0102345678','Cong ty CP Tai Chinh XYZ','Tran Thi B','0902222222','info@xyz.vn','Tang 12, Toa nha Da Nang','DN','DANG_THUE'),
 (3,'CT-03','0103456789','Cong ty TNHH Thuong Mai DEF','Le Van C','0903333333','sales@def.vn','Tang 5, Toa nha Da Nang','DN','DANG_THUE');
@@ -43,3 +47,12 @@ INSERT INTO CHI_TIET_HOA_DON (ma_hoa_don, ma_chi_tiet_hop_dong, ma_dang_ky, loai
 (2,NULL,5,'TIEN_DICH_VU','An ninh bao ve',200,10000,2000000),
 (3,3,NULL,'TIEN_THUE_PHONG','Thue phong VP-501 (100m2)',100,260000,26000000),
 (3,NULL,6,'TIEN_DICH_VU','Suat an trua',2,45000,90000);
+
+-- Phan cong + luong nhan vien toa nha DN (cuc bo tai node DN)
+INSERT INTO PHAN_CONG_CONG_VIEC (ma_phan_cong, ma_nhan_vien_toa_nha, ma_vi_tri, ma_dich_vu, thang, nam, ngay_bat_dau, ngay_ket_thuc) VALUES
+(3,3,3,1,4,2026,'2026-04-01','2026-04-30');
+
+-- BQL-003 (Ky thuat vien, vi tri 3, ty le 2%), phu trach dich vu Ve sinh (ma_dich_vu=1).
+-- Doanh thu ve sinh tai DN thang 4 = 3.000.000 (hoa don CT-02). Thuong = 3.000.000 * 2% = 60.000.
+INSERT INTO LUONG_NHAN_VIEN (ma_luong, ma_nhan_vien_toa_nha, thang, nam, luong_co_ban, doanh_thu_dich_vu, tien_thuong, tong_luong, trang_thai) VALUES
+(3,3,4,2026,9000000,3000000,60000,9060000,'DA_CHI');

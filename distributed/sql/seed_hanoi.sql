@@ -4,6 +4,11 @@
 -- =====================================================================
 USE QuanLyToaNha;
 
+-- Nhan vien toa nha khu vuc HN (BQL-001, BQL-002)
+INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, ngay_sinh, gioi_tinh, so_dien_thoai, email, khu_vuc, ngay_vao_lam, trang_thai) VALUES
+(1,'BQL-001','Vu Van Quan','1985-04-12','NAM','0911111111','quan@toanha.vn','HN','2020-01-15','DANG_LAM'),
+(2,'BQL-002','Do Thi Ha','1990-07-20','NU','0912222222','ha@toanha.vn','HN','2021-03-01','DANG_LAM');
+
 INSERT INTO CONG_TY (ma_cong_ty, ma_so_cong_ty, ma_so_thue, ten_cong_ty, nguoi_dai_dien, so_dien_thoai, email, dia_chi, khu_vuc, trang_thai) VALUES
 (1,'CT-01','0101234567','Cong ty TNHH Cong Nghe ABC','Nguyen Van A','0901111111','contact@abc.vn','Tang 8, Toa nha PTIT Ha Noi','HN','DANG_THUE');
 

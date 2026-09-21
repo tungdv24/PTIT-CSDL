@@ -14,15 +14,14 @@
 
 ---
 
+> Nhan vien toa nha (BQL) da PHAN MANH theo khu vuc: HN co BQL-001/002, DN co BQL-003, HCM co BQL-004/005. Moi BQL dang nhap tai dung chi nhanh cua minh.
+
 ## Chi nhanh HA NOI (HN) - Tru so chinh
 | Ten dang nhap | Mat khau | Vai tro | Ho ten / Ghi chu |
 |---------------|----------|---------|------------------|
 | admin | admin | ADMIN | Quan tri Tru so HN (co bao cao tong hop toan quoc) |
-| BQL-001 | BQL-001 | BQL | Vu Van Quan |
-| BQL-002 | BQL-002 | BQL | Do Thi Ha |
-| BQL-003 | BQL-003 | BQL | Bui Van Tung |
-| BQL-004 | BQL-004 | BQL | Ngo Thi Lan |
-| BQL-005 | BQL-005 | BQL | Dang Van Minh |
+| BQL-001 | BQL-001 | BQL | Vu Van Quan (nhan vien toa nha HN) |
+| BQL-002 | BQL-002 | BQL | Do Thi Ha (nhan vien toa nha HN) |
 | CT-01 | CT-01 | CONG_TY | Cong ty TNHH Cong Nghe ABC |
 | NVCT-0001 | NVCT-0001 | NVCT | Nguyen Van Hung (ABC) |
 | NVCT-0002 | NVCT-0002 | NVCT | Tran Thi Mai (ABC) |
@@ -31,6 +30,7 @@
 | Ten dang nhap | Mat khau | Vai tro | Ho ten / Ghi chu |
 |---------------|----------|---------|------------------|
 | admin | admin | ADMIN | Quan tri Chi nhanh Da Nang (chi trong node DN) |
+| BQL-003 | BQL-003 | BQL | Bui Van Tung (nhan vien toa nha DN) |
 | CT-02 | CT-02 | CONG_TY | Cong ty CP Tai Chinh XYZ |
 | CT-03 | CT-03 | CONG_TY | Cong ty TNHH Thuong Mai DEF |
 | NVCT-0003 | NVCT-0003 | NVCT | Le Van Nam (XYZ) |
@@ -40,6 +40,8 @@
 | Ten dang nhap | Mat khau | Vai tro | Ho ten / Ghi chu |
 |---------------|----------|---------|------------------|
 | admin | admin | ADMIN | Quan tri Chi nhanh TP.HCM (chi trong node HCM) |
+| BQL-004 | BQL-004 | BQL | Ngo Thi Lan (nhan vien toa nha HCM) |
+| BQL-005 | BQL-005 | BQL | Dang Van Minh (nhan vien toa nha HCM) |
 | CT-04 | CT-04 | CONG_TY | Cong ty CP Giao Duc GHI |
 | CT-05 | CT-05 | CONG_TY | Cong ty TNHH Logistics JKL |
 | NVCT-0005 | NVCT-0005 | NVCT | Hoang Van Long (GHI) |

@@ -57,6 +57,23 @@ CREATE TABLE VAN_PHONG_HCM (
 ) ENGINE=FEDERATED
   CONNECTION='mysql://root:DistPass123@db_hcm:3306/QuanLyToaNha/VAN_PHONG';
 
+-- Nhan vien toa nha o DN / HCM (phan manh theo khu vuc)
+DROP TABLE IF EXISTS NHAN_VIEN_TOA_NHA_DN;
+CREATE TABLE NHAN_VIEN_TOA_NHA_DN (
+    ma_nhan_vien_toa_nha INT, ma_so_nhan_vien VARCHAR(50), ho_ten VARCHAR(100),
+    ngay_sinh DATE, gioi_tinh VARCHAR(10), so_dien_thoai VARCHAR(20), email VARCHAR(100),
+    khu_vuc VARCHAR(10), ngay_vao_lam DATE, trang_thai VARCHAR(20)
+) ENGINE=FEDERATED
+  CONNECTION='mysql://root:DistPass123@db_danang:3306/QuanLyToaNha/NHAN_VIEN_TOA_NHA';
+
+DROP TABLE IF EXISTS NHAN_VIEN_TOA_NHA_HCM;
+CREATE TABLE NHAN_VIEN_TOA_NHA_HCM (
+    ma_nhan_vien_toa_nha INT, ma_so_nhan_vien VARCHAR(50), ho_ten VARCHAR(100),
+    ngay_sinh DATE, gioi_tinh VARCHAR(10), so_dien_thoai VARCHAR(20), email VARCHAR(100),
+    khu_vuc VARCHAR(10), ngay_vao_lam DATE, trang_thai VARCHAR(20)
+) ENGINE=FEDERATED
+  CONNECTION='mysql://root:DistPass123@db_hcm:3306/QuanLyToaNha/NHAN_VIEN_TOA_NHA';
+
 -- ------- VIEW TONG HOP TOAN HE THONG (Distributed Views) -------
 -- Gom du lieu HN (cuc bo) + DN + HCM (qua FEDERATED). Tuong duong plan muc 4B.
 DROP VIEW IF EXISTS VW_Global_CONG_TY;
@@ -85,6 +102,14 @@ CREATE VIEW VW_Global_VAN_PHONG AS
     SELECT 'DN', ma_van_phong, ky_hieu_van_phong, dien_tich, khu_vuc, trang_thai FROM VAN_PHONG_DN
     UNION ALL
     SELECT 'HCM', ma_van_phong, ky_hieu_van_phong, dien_tich, khu_vuc, trang_thai FROM VAN_PHONG_HCM;
+
+DROP VIEW IF EXISTS VW_Global_NHAN_VIEN_TOA_NHA;
+CREATE VIEW VW_Global_NHAN_VIEN_TOA_NHA AS
+    SELECT 'HN' AS chi_nhanh, ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, khu_vuc, trang_thai FROM NHAN_VIEN_TOA_NHA
+    UNION ALL
+    SELECT 'DN', ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, khu_vuc, trang_thai FROM NHAN_VIEN_TOA_NHA_DN
+    UNION ALL
+    SELECT 'HCM', ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, khu_vuc, trang_thai FROM NHAN_VIEN_TOA_NHA_HCM;
 
 -- ------- PROCEDURE bao cao tai chinh tong hop toan he thong (plan muc 5) -------
 DROP PROCEDURE IF EXISTS sp_bao_cao_tong_hop;

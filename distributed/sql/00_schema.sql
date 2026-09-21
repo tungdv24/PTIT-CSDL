@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS VI_TRI_CONG_VIEC (
     mo_ta TEXT
 );
 
+-- NHAN_VIEN_TOA_NHA: PHAN MANH theo khu vuc (moi chi nhanh co doi van hanh rieng).
 CREATE TABLE IF NOT EXISTS NHAN_VIEN_TOA_NHA (
     ma_nhan_vien_toa_nha INT AUTO_INCREMENT PRIMARY KEY,
     ma_so_nhan_vien VARCHAR(50) NOT NULL UNIQUE,
@@ -41,6 +42,7 @@ CREATE TABLE IF NOT EXISTS NHAN_VIEN_TOA_NHA (
     gioi_tinh VARCHAR(10),
     so_dien_thoai VARCHAR(20) NOT NULL,
     email VARCHAR(100),
+    khu_vuc VARCHAR(10) NOT NULL DEFAULT 'HN',   -- HN / DN / HCM (thuoc tinh phan manh)
     ngay_vao_lam DATE NOT NULL,
     trang_thai VARCHAR(20) DEFAULT 'DANG_LAM'
 );

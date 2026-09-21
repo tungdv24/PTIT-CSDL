@@ -4,6 +4,11 @@
 -- =====================================================================
 USE QuanLyToaNha;
 
+-- Nhan vien toa nha khu vuc HCM (BQL-004, BQL-005)
+INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, ngay_sinh, gioi_tinh, so_dien_thoai, email, khu_vuc, ngay_vao_lam, trang_thai) VALUES
+(4,'BQL-004','Ngo Thi Lan','1995-02-28','NU','0914444444','lan@toanha.vn','HCM','2022-01-05','DANG_LAM'),
+(5,'BQL-005','Dang Van Minh','1988-09-17','NAM','0915555555','minh@toanha.vn','HCM','2020-08-20','DANG_LAM');
+
 INSERT INTO CONG_TY (ma_cong_ty, ma_so_cong_ty, ma_so_thue, ten_cong_ty, nguoi_dai_dien, so_dien_thoai, email, dia_chi, khu_vuc, trang_thai) VALUES
 (4,'CT-04','0104567890','Cong ty CP Giao Duc GHI','Pham Thi D','0904444444','hello@ghi.vn','Tang 3, Toa nha TP.HCM','HCM','DANG_THUE'),
 (5,'CT-05','0105678901','Cong ty TNHH Logistics JKL','Hoang Van E','0905555555','ops@jkl.vn','Tang 10, Toa nha TP.HCM','HCM','DANG_THUE');
@@ -41,3 +46,14 @@ INSERT INTO CHI_TIET_HOA_DON (ma_hoa_don, ma_chi_tiet_hop_dong, ma_dang_ky, loai
 (4,NULL,7,'TIEN_DICH_VU','Nuoc uong tinh khiet',1,30000,30000),
 (5,5,NULL,'TIEN_THUE_PHONG','Thue phong VP-302 (120m2)',120,280000,33600000),
 (5,NULL,8,'TIEN_DICH_VU','Suat an trua',3,45000,135000);
+
+-- Phan cong + luong nhan vien toa nha HCM (cuc bo tai node HCM)
+INSERT INTO PHAN_CONG_CONG_VIEC (ma_phan_cong, ma_nhan_vien_toa_nha, ma_vi_tri, ma_dich_vu, thang, nam, ngay_bat_dau, ngay_ket_thuc) VALUES
+(4,4,5,NULL,4,2026,'2026-04-01','2026-04-30'),
+(5,5,4,NULL,4,2026,'2026-04-01','2026-04-30');
+
+-- BQL-004 (Ve sinh, vi tri 5) va BQL-005 (Bao ve, vi tri 4). HCM chua dang ky
+-- dich vu ve sinh/bao ve -> doanh thu phu trach = 0 -> chi luong co ban.
+INSERT INTO LUONG_NHAN_VIEN (ma_luong, ma_nhan_vien_toa_nha, thang, nam, luong_co_ban, doanh_thu_dich_vu, tien_thuong, tong_luong, trang_thai) VALUES
+(4,4,4,2026,6500000,0,0,6500000,'DA_CHI'),
+(5,5,4,2026,7000000,0,0,7000000,'DA_CHI');

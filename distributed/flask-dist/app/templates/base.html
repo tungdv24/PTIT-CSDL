@@ -49,6 +49,7 @@
       <a href="{{ url_for('crud_van_phong.list_view') }}">Van phong</a>
       <a href="{{ url_for('crud_hop_dong.list_view') }}">Hop dong thue</a>
       <a href="{{ url_for('crud_nhan_vien_cong_ty.list_view') }}">Nhan vien cong ty</a>
+      <a href="{{ url_for('crud_nhan_vien_toa_nha.list_view') }}">Nhan vien toa nha</a>
       <a href="{{ url_for('crud_dang_ky_dich_vu.list_view') }}">Dang ky dich vu</a>
       <div class="group">Tai chinh (node {{ khu_vuc_hien_tai }})</div>
       <a href="{{ url_for('finance.hoa_don_list') }}">Hoa don</a>
@@ -56,6 +57,7 @@
       {% if current_user.is_head_office %}
         <div class="group">Tong hop toan he thong (HN)</div>
         <a href="{{ url_for('report.cong_ty_toan_quoc') }}">Cong ty toan quoc</a>
+        <a href="{{ url_for('report.nhan_vien_toan_quoc') }}">Nhan vien toa nha toan quoc</a>
         <a href="{{ url_for('report.hoa_don_toan_quoc') }}">Hoa don toan quoc</a>
       {% endif %}
     {% elif role == 'BQL' %}

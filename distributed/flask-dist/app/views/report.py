@@ -17,6 +17,14 @@ def cong_ty_toan_quoc():
     return render_template("global_cong_ty.html", rows=rows)
 
 
+@bp.route("/nhan-vien-toa-nha")
+@head_office_only
+def nhan_vien_toan_quoc():
+    rows = db.query_all("SELECT * FROM VW_Global_NHAN_VIEN_TOA_NHA ORDER BY chi_nhanh, ma_nhan_vien_toa_nha",
+                        khu_vuc="HN")
+    return render_template("global_nhan_vien.html", rows=rows)
+
+
 @bp.route("/hoa-don")
 @head_office_only
 def hoa_don_toan_quoc():

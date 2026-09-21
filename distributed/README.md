@@ -31,13 +31,16 @@ anh du lieu (Horizontal Fragmentation theo `khu_vuc`)
 - **DN** giu cong ty khu vuc DN (CT-02, CT-03) va toan bo hop dong/hoa don/su dung cua ho.
 - **HCM** giu cong ty khu vuc HCM (CT-04, CT-05) va du lieu lien quan.
 
+- **Nhan vien toa nha (`NHAN_VIEN_TOA_NHA`)** cung PHAN MANH theo khu vuc: HN (BQL-001/002), DN (BQL-003), HCM (BQL-004/005). Luong tinh cuc bo tai tung node.
+- **Nhan vien cong ty (`NHAN_VIEN_CONG_TY`)** khong can cot khu vuc — di theo cong ty (da phan manh), nen tu dong nam o dung node cua cong ty.
+
 ### Du lieu nhan ban (Replicated)
 Cac bang danh muc dung chung nap GIONG NHAU o ca 3 node:
-`DICH_VU`, `LOAI_CHI_PHI`, `VI_TRI_CONG_VIEC`, `NHAN_VIEN_TOA_NHA`.
+`DICH_VU`, `LOAI_CHI_PHI`, `VI_TRI_CONG_VIEC`.
 
 ### Truy van phan tan (Distributed Query) tai HN
 Tru so HN co cac bang **FEDERATED** tro toi DN/HCM va cac **VIEW** `UNION ALL`:
-- `VW_Global_CONG_TY`, `VW_Global_HOA_DON`, `VW_Global_VAN_PHONG`
+- `VW_Global_CONG_TY`, `VW_Global_HOA_DON`, `VW_Global_VAN_PHONG`, `VW_Global_NHAN_VIEN_TOA_NHA`
 - Procedure `sp_bao_cao_tong_hop(thang, nam)`: gom doanh thu 3 chi nhanh.
 
 ## 2. Cac dich vu & cong

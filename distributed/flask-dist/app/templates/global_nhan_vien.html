@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Nhan vien toa nha toan quoc{% endblock %}
+{% block content %}
+<div class="page-head"><h1>🌐 Nhan vien toa nha toan he thong (3 chi nhanh)</h1></div>
+<div class="flash info">Gop tu 3 node (HN cuc bo + DN + HCM qua FEDERATED) qua VIEW <code>VW_Global_NHAN_VIEN_TOA_NHA</code>.</div>
+<div class="card" style="padding:0;overflow:hidden;">
+  <table>
+    <thead><tr><th>Chi nhanh</th><th>Ma NV</th><th>Ho ten</th><th>Khu vuc</th><th>Trang thai</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr><td><span class="badge blue">{{ r.chi_nhanh }}</span></td><td>{{ r.ma_so_nhan_vien }}</td>
+        <td>{{ r.ho_ten }}</td><td>{{ r.khu_vuc }}</td><td>{{ r.trang_thai }}</td></tr>
+      {% else %}<tr><td colspan="5" style="text-align:center;color:#64748b;padding:24px;">Khong co du lieu.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<p style="color:#64748b;">Tong: {{ rows|length }} nhan vien toa nha tren toan he thong.</p>
+{% endblock %}
