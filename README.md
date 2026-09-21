@@ -4,6 +4,10 @@ Ung dung web quan ly toa nha van phong cho thue, xay dung theo dac ta CSDL trong
 
 > Mon hoc: **M26CQHT03-B - Nhom 7** | De tai: He CSDL quan ly toa nha van phong.
 > Khai niem NoSQL: xem `nosql.md`. Huong dan van hanh: xem `huong-dan-su-dung.md`.
+>
+> **Hai phien ban:**
+> - **Tap trung** (thu muc nay + `flask-app/`): 1 CSDL MySQL + MongoDB. Tag git `v1-centralized`.
+> - **Phan tan** (`distributed/`): 3 node MySQL (HN/DN/HCM) + FEDERATED + VIEW tong hop, bo MongoDB, login chon chi nhanh. Xem `distributed/README.md`.
 
 ## Tech Stack
 

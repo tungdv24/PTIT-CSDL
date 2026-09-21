@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Hoa don{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Hoa don <span class="badge blue">{{ khu_vuc_hien_tai }}</span></h1>
+  <form class="toolbar" method="get">
+    <select name="thang">{% for m in range(1,13) %}<option value="{{ m }}" {{ 'selected' if m==thang }}>Thang {{ m }}</option>{% endfor %}</select>
+    <select name="nam">{% for y in [2025,2026,2027] %}<option value="{{ y }}" {{ 'selected' if y==nam }}>{{ y }}</option>{% endfor %}</select>
+    <button class="btn secondary">Xem</button>
+  </form>
+</div>
+<div class="card" style="padding:0;overflow:hidden;">
+  <table>
+    <thead><tr><th>So HD</th><th>Cong ty</th><th>Tien thue</th><th>Tien DV</th><th>Tong tien</th><th>Trang thai</th><th></th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr><td>{{ r.so_hoa_don }}</td><td>{{ r.ten_cong_ty }}</td><td>{{ r.tien_thue_van_phong|money }} đ</td>
+        <td>{{ r.tien_dich_vu|money }} đ</td><td><strong>{{ r.tong_tien|money }} đ</strong></td>
+        <td>{% if r.trang_thai_thanh_toan=='DA_THANH_TOAN' %}<span class="badge green">Da TT</span>{% else %}<span class="badge yellow">Chua TT</span>{% endif %}</td>
+        <td><a class="btn sm secondary" href="{{ url_for('finance.hoa_don_detail', ma_hoa_don=r.ma_hoa_don) }}">Chi tiet</a></td></tr>
+      {% else %}<tr><td colspan="7" style="text-align:center;color:#64748b;padding:24px;">Chua co hoa don.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

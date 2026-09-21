@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ cfg.title }}{% endblock %}
+{% block content %}
+{% set base = 'crud_' ~ slug.replace('-', '_') %}
+<div class="page-head">
+  <h1>{{ 'Sua' if row else 'Them' }} {{ cfg.title }}</h1>
+  <a class="btn secondary" href="{{ url_for(base ~ '.list_view') }}">← Quay lai</a>
+</div>
+<div class="card" style="max-width:640px;">
+  <form method="post">
+    {% for f in fields %}
+    <label>{{ f.label }}{% if f.required %} <span style="color:#dc2626;">*</span>{% endif %}</label>
+    {% set current = row[f.name] if row and row[f.name] is not none else '' %}
+    {% if f.type == 'select' and f.fk %}
+      <select name="{{ f.name }}" {{ 'required' if f.required }}>
+        <option value="">-- Chon --</option>
+        {% for val, label in f.fk_options %}<option value="{{ val }}" {{ 'selected' if current|string == val|string }}>{{ label }}</option>{% endfor %}
+      </select>
+    {% elif f.type == 'select' %}
+      <select name="{{ f.name }}" {{ 'required' if f.required }}>
+        {% if not f.required %}<option value="">-- Chon --</option>{% endif %}
+        {% for opt in f.options %}<option value="{{ opt }}" {{ 'selected' if current == opt }}>{{ opt }}</option>{% endfor %}
+      </select>
+    {% elif f.type == 'textarea' %}
+      <textarea name="{{ f.name }}" rows="3">{{ current }}</textarea>
+    {% else %}
+      <input type="{{ f.type }}" name="{{ f.name }}" value="{{ current }}" {{ 'step=any' if f.type=='number' }} {{ 'required' if f.required }}>
+    {% endif %}
+    {% endfor %}
+    <div style="margin-top:20px;"><button class="btn">{{ 'Cap nhat' if row else 'Them moi' }}</button></div>
+  </form>
+</div>
+{% endblock %}

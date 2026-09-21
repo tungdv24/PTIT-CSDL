@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ cfg.title }}{% endblock %}
+{% block content %}
+{% set base = 'crud_' ~ slug.replace('-', '_') %}
+<div class="page-head">
+  <h1>{{ cfg.title }} <span class="badge blue">{{ khu_vuc_hien_tai }}</span></h1>
+  <a class="btn" href="{{ url_for(base ~ '.create_view') }}">+ Them moi</a>
+</div>
+<div class="card" style="padding:0;overflow:hidden;">
+  <table>
+    <thead><tr>{% for col, label in cfg.list_cols %}<th>{{ label }}</th>{% endfor %}<th style="width:150px;">Thao tac</th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        {% for col, label in cfg.list_cols %}
+          <td>{% set v = row[col] %}
+            {% if col.startswith('trang_thai') %}<span class="badge {{ 'green' if v in ['DANG_THUE','HOAT_DONG','HIEU_LUC','DANG_DUNG'] else 'yellow' }}">{{ v }}</span>
+            {% elif col in ['don_gia','so_tien'] and v is not none %}{{ v|money }} đ
+            {% else %}{{ v if v is not none else '—' }}{% endif %}
+          </td>
+        {% endfor %}
+        <td>
+          <a class="btn sm secondary" href="{{ url_for(base ~ '.edit_view', item_id=row[cfg.pk]) }}">Sua</a>
+          <form class="inline" method="post" action="{{ url_for(base ~ '.delete_view', item_id=row[cfg.pk]) }}" onsubmit="return confirm('Xoa?');"><button class="btn sm danger">Xoa</button></form>
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="{{ cfg.list_cols|length + 1 }}" style="text-align:center;color:#64748b;padding:24px;">Chua co du lieu.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

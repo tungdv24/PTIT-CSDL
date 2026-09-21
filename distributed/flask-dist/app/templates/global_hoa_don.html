@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Hoa don toan quoc{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>🌐 Hoa don toan he thong</h1>
+  <form class="toolbar" method="get">
+    <select name="thang">{% for m in range(1,13) %}<option value="{{ m }}" {{ 'selected' if m==thang }}>Thang {{ m }}</option>{% endfor %}</select>
+    <select name="nam">{% for y in [2025,2026,2027] %}<option value="{{ y }}" {{ 'selected' if y==nam }}>{{ y }}</option>{% endfor %}</select>
+    <button class="btn secondary">Xem</button>
+  </form>
+</div>
+<div class="flash info">Gop tu 3 chi nhanh qua <code>VW_Global_HOA_DON</code> (FEDERATED). Doanh thu toan quoc thang {{ thang }}/{{ nam }}: <strong>{{ tong_toan_quoc|money }} đ</strong></div>
+<div class="grid">
+  {% for t in tong_theo_cn %}
+  <div class="kpi"><div class="label">Chi nhanh {{ t.chi_nhanh }} ({{ t.so_hd }} HD)</div><div class="value">{{ t.doanh_thu|money }} đ</div></div>
+  {% endfor %}
+</div>
+<div class="card" style="padding:0;overflow:hidden;margin-top:18px;">
+  <table>
+    <thead><tr><th>Chi nhanh</th><th>So HD</th><th>Cong ty (ma)</th><th>Tong tien</th><th>Trang thai</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr><td><span class="badge blue">{{ r.chi_nhanh }}</span></td><td>{{ r.so_hoa_don }}</td><td>{{ r.ma_cong_ty }}</td>
+        <td><strong>{{ r.tong_tien|money }} đ</strong></td>
+        <td>{% if r.trang_thai_thanh_toan=='DA_THANH_TOAN' %}<span class="badge green">Da TT</span>{% else %}<span class="badge yellow">Chua TT</span>{% endif %}</td></tr>
+      {% else %}<tr><td colspan="5" style="text-align:center;color:#64748b;padding:24px;">Khong co hoa don.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

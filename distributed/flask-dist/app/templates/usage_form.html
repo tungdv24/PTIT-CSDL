@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Ghi nhan su dung{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Ghi nhan su dung dich vu</h1>
+  <a class="btn secondary" href="{{ url_for('usage.list_view') }}">← Quay lai</a>
+</div>
+<div class="card" style="max-width:560px;">
+  {% if is_self %}<div class="flash info">Ban dang ghi su dung cho chinh minh.</div>{% endif %}
+  <form method="post" id="f">
+    <label>Dich vu (theo luot) <span style="color:#dc2626;">*</span></label>
+    <select name="ma_dang_ky" id="dk" required>
+      <option value="">-- Chon dich vu --</option>
+      {% for d in dks %}<option value="{{ d.ma_dang_ky }}" data-gia="{{ d.don_gia }}">{{ d.ten_dich_vu }} ({{ d.don_gia|money }} đ)</option>{% endfor %}
+    </select>
+    <label>Ngay su dung <span style="color:#dc2626;">*</span></label>
+    <input type="date" name="ngay_su_dung" value="{{ today }}" required>
+    <label>So luong <span style="color:#dc2626;">*</span></label>
+    <input type="number" step="any" name="so_luong" value="1" required>
+    <label>Don gia <span style="color:#dc2626;">*</span></label>
+    <input type="number" step="any" name="don_gia" id="dg" required>
+    <label>Ghi chu</label>
+    <input type="text" name="ghi_chu" placeholder="VD: Suat an trua, Gui xe...">
+    <div style="margin-top:20px;"><button class="btn">Ghi nhan</button></div>
+  </form>
+</div>
+<script>
+  document.getElementById('dk').addEventListener('change', function(){
+    var g = this.options[this.selectedIndex].getAttribute('data-gia');
+    if (g) document.getElementById('dg').value = g;
+  });
+</script>
+{% endblock %}

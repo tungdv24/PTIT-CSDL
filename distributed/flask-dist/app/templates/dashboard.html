@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Dashboard - {{ chi_nhanh_hien_tai }}</h1>
+  <form class="toolbar" method="get">
+    <select name="thang" onchange="this.form.submit()">
+      {% for m in range(1,13) %}<option value="{{ m }}" {{ 'selected' if m==thang }}>Thang {{ m }}</option>{% endfor %}
+    </select>
+    <select name="nam" onchange="this.form.submit()">
+      {% for y in [2025,2026,2027] %}<option value="{{ y }}" {{ 'selected' if y==nam }}>{{ y }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+<div class="flash info">Du lieu hien thi la CUC BO cua chi nhanh {{ khu_vuc_hien_tai }}. Bao cao toan he thong o menu "Tong hop" (chi HN).</div>
+<div class="grid">
+  <div class="kpi"><div class="label">Doanh thu ({{ thang }}/{{ nam }})</div><div class="value" style="color:#16a34a;">{{ tong_thu|money }} đ</div></div>
+  <div class="kpi"><div class="label">Cong ty</div><div class="value">{{ counts.cong_ty }}</div></div>
+  <div class="kpi"><div class="label">Van phong</div><div class="value">{{ counts.van_phong }}</div></div>
+  <div class="kpi"><div class="label">Hop dong hieu luc</div><div class="value">{{ counts.hop_dong }}</div></div>
+</div>
+<div class="card" style="margin-top:18px;">
+  <h3 style="margin-top:0;">Hoa don chi nhanh ({{ thang }}/{{ nam }})</h3>
+  <table>
+    <tr><th>Cong ty</th><th>Tong tien</th><th>Trang thai</th></tr>
+    {% for c in top %}
+    <tr><td>{{ c.ten_cong_ty }}</td><td>{{ c.tong_tien|money }} đ</td>
+      <td>{% if c.trang_thai_thanh_toan=='DA_THANH_TOAN' %}<span class="badge green">Da TT</span>{% else %}<span class="badge yellow">Chua TT</span>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="3" style="color:#64748b;">Chua co hoa don.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

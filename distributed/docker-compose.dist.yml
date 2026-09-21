@@ -1,0 +1,109 @@
+# =====================================================================
+# CSDL PHAN TAN - Quan ly toa nha van phong (3 node)
+#   dist_hanoi  : Server Tong (tru so chinh HN) - danh muc chung + FEDERATED + VIEW tong hop
+#   dist_danang : Chi nhanh Da Nang (mien Trung) - du lieu cuc bo
+#   dist_hcm    : Chi nhanh TP.HCM (mien Nam)    - du lieu cuc bo
+# Tat ca bat --federated de HN co the truy van xuyen node (thay cho Linked Server).
+# 3 node cung 1 Docker network (thay cho VPN/Radmin trong plan).
+# =====================================================================
+services:
+  db_hanoi:
+    image: mysql:8.0
+    container_name: dist_hanoi
+    command: --federated --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3316:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-DistPass123}
+      MYSQL_DATABASE: QuanLyToaNha
+    volumes:
+      - hanoi_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD:-DistPass123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  db_danang:
+    image: mysql:8.0
+    container_name: dist_danang
+    command: --federated --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3326:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-DistPass123}
+      MYSQL_DATABASE: QuanLyToaNha
+    volumes:
+      - danang_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD:-DistPass123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  db_hcm:
+    image: mysql:8.0
+    container_name: dist_hcm
+    command: --federated --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3336:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-DistPass123}
+      MYSQL_DATABASE: QuanLyToaNha
+    volumes:
+      - hcm_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD:-DistPass123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # phpMyAdmin cho phep chon 1 trong 3 server de xem (arbitrary server).
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: dist_phpmyadmin
+    ports:
+      - "8090:80"
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOSTS: db_hanoi,db_danang,db_hcm
+      UPLOAD_LIMIT: 100M
+    depends_on:
+      - db_hanoi
+      - db_danang
+      - db_hcm
+    restart: unless-stopped
+
+  flask_app:
+    build: ./flask-dist
+    container_name: dist_flask
+    ports:
+      - "5001:5000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-please-change-this-secret}
+      DB_PASSWORD: ${DB_PASSWORD:-DistPass123}
+      DB_NAME: QuanLyToaNha
+      # 3 node (dung ten service trong network)
+      NODE_HANOI_HOST: db_hanoi
+      NODE_DANANG_HOST: db_danang
+      NODE_HCM_HOST: db_hcm
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+    depends_on:
+      db_hanoi:
+        condition: service_healthy
+      db_danang:
+        condition: service_healthy
+      db_hcm:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  hanoi_data:
+  danang_data:
+  hcm_data:

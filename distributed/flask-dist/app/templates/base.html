@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Quan ly toa nha (Phan tan){% endblock %}</title>
+  <style>
+    :root{--bg:#f4f6fb;--card:#fff;--line:#e2e8f0;--primary:#2563eb;--text:#1e293b;--muted:#64748b;}
+    *{box-sizing:border-box;} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    a{color:var(--primary);text-decoration:none;}
+    .layout{display:flex;min-height:100vh;}
+    .sidebar{width:240px;background:#0f172a;color:#cbd5e1;padding:18px 0;position:fixed;height:100vh;overflow-y:auto;}
+    .sidebar .brand{font-weight:700;color:#fff;padding:0 20px 8px;font-size:17px;}
+    .sidebar .branch{margin:0 20px 12px;padding:6px 10px;background:#1e293b;border-radius:6px;font-size:12px;color:#93c5fd;}
+    .sidebar .group{padding:12px 20px 4px;font-size:11px;text-transform:uppercase;color:#64748b;letter-spacing:.05em;}
+    .sidebar a{display:block;padding:9px 20px;color:#cbd5e1;font-size:14px;}
+    .sidebar a:hover{background:#1e293b;color:#fff;}
+    .main{margin-left:240px;flex:1;}
+    .topbar{background:var(--card);border-bottom:1px solid var(--line);padding:12px 24px;display:flex;justify-content:space-between;align-items:center;}
+    .content{padding:24px;}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:18px;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
+    .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;}
+    .kpi .label{color:var(--muted);font-size:13px;} .kpi .value{font-size:24px;font-weight:700;margin-top:6px;}
+    table{width:100%;border-collapse:collapse;font-size:14px;} th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);}
+    th{background:#f8fafc;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;}
+    .btn{display:inline-block;background:var(--primary);color:#fff;padding:8px 14px;border-radius:7px;border:none;cursor:pointer;font-size:14px;}
+    .btn.secondary{background:#e2e8f0;color:var(--text);} .btn.danger{background:#dc2626;} .btn.sm{padding:4px 9px;font-size:12px;}
+    .badge{padding:3px 9px;border-radius:20px;font-size:12px;background:#e2e8f0;color:#334155;}
+    .badge.green{background:#dcfce7;color:#166534;} .badge.red{background:#fee2e2;color:#991b1b;} .badge.yellow{background:#fef9c3;color:#854d0e;} .badge.blue{background:#dbeafe;color:#1e40af;}
+    input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-size:14px;font-family:inherit;}
+    label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px;}
+    .flash{padding:11px 15px;border-radius:8px;margin-bottom:12px;font-size:14px;}
+    .flash.success{background:#dcfce7;color:#166534;} .flash.danger{background:#fee2e2;color:#991b1b;} .flash.info{background:#dbeafe;color:#1e40af;}
+    .page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;} .page-head h1{font-size:22px;margin:0;}
+    .toolbar{display:flex;gap:10px;align-items:center;} form.inline{display:inline;}
+  </style>
+</head>
+<body>
+{% if current_user.is_authenticated %}
+{% set role = current_user.vai_tro %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">🏢 Toa nha (Phan tan)</div>
+    <div class="branch">📍 {{ chi_nhanh_hien_tai }}</div>
+    <a href="{{ url_for('dashboard.index') }}">📊 Dashboard</a>
+    {% if current_user.is_admin %}
+      <div class="group">Quan ly (node {{ khu_vuc_hien_tai }})</div>
+      <a href="{{ url_for('crud_cong_ty.list_view') }}">Cong ty</a>
+      <a href="{{ url_for('crud_van_phong.list_view') }}">Van phong</a>
+      <a href="{{ url_for('crud_hop_dong.list_view') }}">Hop dong thue</a>
+      <a href="{{ url_for('crud_nhan_vien_cong_ty.list_view') }}">Nhan vien cong ty</a>
+      <a href="{{ url_for('crud_dang_ky_dich_vu.list_view') }}">Dang ky dich vu</a>
+      <div class="group">Tai chinh (node {{ khu_vuc_hien_tai }})</div>
+      <a href="{{ url_for('finance.hoa_don_list') }}">Hoa don</a>
+      <a href="{{ url_for('finance.luong_list') }}">Luong nhan vien</a>
+      {% if current_user.is_head_office %}
+        <div class="group">Tong hop toan he thong (HN)</div>
+        <a href="{{ url_for('report.cong_ty_toan_quoc') }}">Cong ty toan quoc</a>
+        <a href="{{ url_for('report.hoa_don_toan_quoc') }}">Hoa don toan quoc</a>
+      {% endif %}
+    {% elif role == 'BQL' %}
+      <div class="group">Nhan vien toa nha</div>
+      <a href="{{ url_for('finance.luong_list') }}">Luong cua toi</a>
+    {% elif role == 'NVCT' %}
+      <div class="group">Dich vu cua toi</div>
+      <a href="{{ url_for('usage.list_view') }}">Dang ky su dung dich vu</a>
+    {% elif role == 'CONG_TY' %}
+      <div class="group">Cong ty cua toi</div>
+      <a href="{{ url_for('finance.hoa_don_list') }}">Hoa don cua cong ty</a>
+    {% endif %}
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <div><span class="badge blue">{{ khu_vuc_hien_tai }}</span> {{ chi_nhanh_hien_tai }}</div>
+      <div class="toolbar">
+        <span>{{ current_user.ho_ten }} <span class="badge">{{ role }}</span></span>
+        <a class="btn sm secondary" href="{{ url_for('auth.logout') }}">Dang xuat</a>
+      </div>
+    </div>
+    <div class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% else %}{% block auth_content %}{% endblock %}{% endif %}
+</body>
+</html>

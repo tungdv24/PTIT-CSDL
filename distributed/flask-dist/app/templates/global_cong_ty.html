@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Cong ty toan quoc{% endblock %}
+{% block content %}
+<div class="page-head"><h1>🌐 Cong ty toan he thong (tong hop tu 3 chi nhanh)</h1></div>
+<div class="flash info">Du lieu gop tu node HN (cuc bo) + DN + HCM qua VIEW phan tan <code>VW_Global_CONG_TY</code> (FEDERATED).</div>
+<div class="card" style="padding:0;overflow:hidden;">
+  <table>
+    <thead><tr><th>Chi nhanh</th><th>Ma CT</th><th>Ten cong ty</th><th>Khu vuc</th><th>Trang thai</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr><td><span class="badge blue">{{ r.chi_nhanh }}</span></td><td>{{ r.ma_so_cong_ty }}</td>
+        <td>{{ r.ten_cong_ty }}</td><td>{{ r.khu_vuc }}</td><td>{{ r.trang_thai }}</td></tr>
+      {% else %}<tr><td colspan="5" style="text-align:center;color:#64748b;padding:24px;">Khong co du lieu.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<p style="color:#64748b;">Tong: {{ rows|length }} cong ty tren toan he thong.</p>
+{% endblock %}
