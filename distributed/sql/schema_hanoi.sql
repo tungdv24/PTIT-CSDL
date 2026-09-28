@@ -292,16 +292,8 @@ CREATE VIEW VW_Global_NHAN_VIEN_TOA_NHA AS
     UNION ALL SELECT 'DN', ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, khu_vuc, trang_thai FROM NHAN_VIEN_TOA_NHA_DN
     UNION ALL SELECT 'HCM', ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, khu_vuc, trang_thai FROM NHAN_VIEN_TOA_NHA_HCM;
 
--- ------- PROCEDURE bao cao tong hop -------
+-- Ban phan tan KHONG dung stored procedure. Bao cao tong hop toan he thong thuc hien
+-- bang SELECT truc tiep tren VIEW VW_Global_HOA_DON, vi du:
+--   SELECT chi_nhanh, COUNT(*), SUM(tong_tien) FROM VW_Global_HOA_DON
+--   WHERE thang=? AND nam=? GROUP BY chi_nhanh WITH ROLLUP;
 DROP PROCEDURE IF EXISTS sp_bao_cao_tong_hop;
-DELIMITER $$
-CREATE PROCEDURE sp_bao_cao_tong_hop(IN p_thang INT, IN p_nam INT)
-BEGIN
-    SELECT chi_nhanh, COUNT(*) AS so_hoa_don,
-           SUM(tien_thue_van_phong) AS tong_tien_thue,
-           SUM(tien_dich_vu) AS tong_tien_dich_vu,
-           SUM(tong_tien) AS tong_doanh_thu
-    FROM VW_Global_HOA_DON WHERE thang = p_thang AND nam = p_nam
-    GROUP BY chi_nhanh WITH ROLLUP;
-END$$
-DELIMITER ;
