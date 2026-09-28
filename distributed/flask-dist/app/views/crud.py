@@ -15,6 +15,33 @@ def F(name, label, type="text", required=False, options=None, fk=None):
             "options": options, "fk": fk}
 
 
+def _auto_gan_quan_ly(new_id, data):
+    """Sau khi them 1 nhan vien toa nha moi -> tu dong gan phan cap quan ly.
+
+    Mo hinh: moi chi nhanh (node) 1 quan ly, 2 tang phang.
+    - Neu node DA co quan ly (co nguoi la ma_nguoi_quan_ly trong QUAN_LY_NHAN_VIEN)
+      -> nhan vien moi la CAP DUOI cua quan ly do.
+    - Neu node CHUA co quan ly nao -> nhan vien moi la nguoi dau tien = QUAN LY,
+      khong tao quan he (se la quan ly cho nhung nguoi them sau).
+    """
+    import datetime
+    # Tim quan ly hien tai cua node (quan he con hieu luc)
+    ql = db.query_one(
+        """SELECT ma_nguoi_quan_ly FROM QUAN_LY_NHAN_VIEN
+           WHERE ngay_ket_thuc IS NULL ORDER BY ma_quan_ly LIMIT 1"""
+    )
+    if ql:
+        manager_id = ql["ma_nguoi_quan_ly"]
+        # Nhan vien moi khong tu quan ly minh (khong the vi id khac)
+        if manager_id != new_id:
+            db.execute(
+                """INSERT INTO QUAN_LY_NHAN_VIEN (ma_nhan_vien, ma_nguoi_quan_ly, ngay_bat_dau)
+                   VALUES (:nv, :ql, :ngay)""",
+                {"nv": new_id, "ql": manager_id, "ngay": datetime.date.today().isoformat()},
+            )
+    # Neu chua co quan ly -> nguoi nay la quan ly dau tien, khong lam gi.
+
+
 ENTITIES = {
     "cong-ty": {
         "table": "CONG_TY", "pk": "ma_cong_ty", "title": "Cong ty",
@@ -48,6 +75,7 @@ ENTITIES = {
     },
     "nhan-vien-toa-nha": {
         "table": "NHAN_VIEN_TOA_NHA", "pk": "ma_nhan_vien_toa_nha", "title": "Nhan vien toa nha",
+        "after_create": _auto_gan_quan_ly,
         "list_cols": [("ma_nhan_vien_toa_nha", "Ma"), ("ma_so_nhan_vien", "Ma NV"), ("ho_ten", "Ho ten"),
                       ("khu_vuc", "Khu vuc"), ("so_dien_thoai", "SDT"), ("trang_thai", "Trang thai")],
         "fields": [
@@ -96,8 +124,14 @@ ENTITIES = {
     },
     "dang-ky-dich-vu": {
         "table": "DANG_KY_DICH_VU", "pk": "ma_dang_ky", "title": "Dang ky dich vu",
-        "list_cols": [("ma_dang_ky", "Ma"), ("ma_cong_ty", "Cong ty"), ("ma_dich_vu", "Dich vu"),
+        "list_cols": [("ma_dang_ky", "Ma"), ("ten_cong_ty", "Cong ty"), ("ten_dich_vu", "Dich vu"),
                       ("don_gia", "Don gia"), ("trang_thai", "Trang thai")],
+        "list_sql": """SELECT dk.ma_dang_ky, ct.ten_cong_ty, dv.ten_dich_vu,
+                              dk.don_gia, dk.trang_thai
+                       FROM DANG_KY_DICH_VU dk
+                       JOIN CONG_TY ct ON ct.ma_cong_ty = dk.ma_cong_ty
+                       JOIN DICH_VU dv ON dv.ma_dich_vu = dk.ma_dich_vu
+                       ORDER BY dk.ma_dang_ky DESC""",
         "fields": [
             F("ma_cong_ty", "Cong ty", type="select", required=True,
               fk=("SELECT ma_cong_ty, ten_cong_ty FROM CONG_TY ORDER BY ten_cong_ty", "ma_cong_ty", "ten_cong_ty")),
@@ -111,8 +145,17 @@ ENTITIES = {
     },
     "quan-ly-nhan-vien": {
         "table": "QUAN_LY_NHAN_VIEN", "pk": "ma_quan_ly", "title": "Phan cap quan ly NV toa nha",
-        "list_cols": [("ma_quan_ly", "Ma"), ("ma_nhan_vien", "NV (cap duoi)"),
-                      ("ma_nguoi_quan_ly", "Nguoi quan ly"), ("ngay_bat_dau", "Tu"), ("ngay_ket_thuc", "Den")],
+        "list_cols": [("ma_quan_ly", "Ma"), ("nv_cap_duoi", "Nhan vien (cap duoi)"),
+                      ("nguoi_quan_ly", "Nguoi quan ly (cap tren)"), ("ngay_bat_dau", "Tu"), ("ngay_ket_thuc", "Den")],
+        "list_sql": """SELECT q.ma_quan_ly,
+                              CONCAT(a.ma_so_nhan_vien,' - ',a.ho_ten) AS nv_cap_duoi,
+                              CONCAT(b.ma_so_nhan_vien,' - ',b.ho_ten) AS nguoi_quan_ly,
+                              q.ngay_bat_dau, q.ngay_ket_thuc
+                       FROM QUAN_LY_NHAN_VIEN q
+                       JOIN NHAN_VIEN_TOA_NHA a ON a.ma_nhan_vien_toa_nha = q.ma_nhan_vien
+                       JOIN NHAN_VIEN_TOA_NHA b ON b.ma_nhan_vien_toa_nha = q.ma_nguoi_quan_ly
+                       ORDER BY q.ma_quan_ly DESC""",
+        "readonly": True,   # danh sach chi de xem; quan he tao tu dong khi them NV toa nha
         "fields": [
             F("ma_nhan_vien", "Nhan vien (cap duoi)", type="select", required=True,
               fk=("SELECT ma_nhan_vien_toa_nha, CONCAT(ma_so_nhan_vien,' - ',ho_ten) AS ten FROM NHAN_VIEN_TOA_NHA ORDER BY ma_so_nhan_vien",
@@ -177,7 +220,11 @@ def _build(slug, cfg):
     @login_required
     def list_view():
         _guard()
-        rows = db.query_all(f"SELECT * FROM {table} ORDER BY {pk} DESC")
+        # Neu entity co "list_sql" (co JOIN de hien ten thay vi id) thi dung no.
+        if cfg.get("list_sql"):
+            rows = db.query_all(cfg["list_sql"])
+        else:
+            rows = db.query_all(f"SELECT * FROM {table} ORDER BY {pk} DESC")
         return render_template("crud_list.html", slug=slug, cfg=cfg, rows=rows)
 
     @bp.route("/new", methods=["GET", "POST"])
@@ -190,7 +237,10 @@ def _build(slug, cfg):
             cols = ", ".join(data.keys())
             ph = ", ".join(f":{k}" for k in data)
             try:
-                db.execute(f"INSERT INTO {table} ({cols}) VALUES ({ph})", data)
+                new_id = db.execute(f"INSERT INTO {table} ({cols}) VALUES ({ph})", data)
+                # Hook sau khi them (vd: tu gan quan ly cho nhan vien toa nha moi)
+                if cfg.get("after_create"):
+                    cfg["after_create"](new_id, data)
                 flash(f"Da them {cfg['title']}.", "success")
                 return redirect(url_for(f"crud_{slug.replace('-', '_')}.list_view"))
             except SQLAlchemyError as e:

@@ -152,9 +152,19 @@ CREATE TRIGGER trg_quanly_no_self
 BEFORE INSERT ON QUAN_LY_NHAN_VIEN
 FOR EACH ROW
 BEGIN
+    DECLARE v_la_quan_ly INT;
+    -- 6a) Khong tu quan ly chinh minh
     IF NEW.ma_nhan_vien = NEW.ma_nguoi_quan_ly THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Nhan vien khong the tu quan ly chinh minh';
+    END IF;
+    -- 6b) Da la quan ly thi khong bi quan ly (mo hinh 2 tang phang)
+    SELECT COUNT(*) INTO v_la_quan_ly
+    FROM QUAN_LY_NHAN_VIEN
+    WHERE ma_nguoi_quan_ly = NEW.ma_nhan_vien AND ngay_ket_thuc IS NULL;
+    IF v_la_quan_ly > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Nguoi nay dang la quan ly nen khong the bi quan ly';
     END IF;
 END$$
 DELIMITER ;

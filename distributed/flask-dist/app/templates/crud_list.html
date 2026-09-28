@@ -4,11 +4,12 @@
 {% set base = 'crud_' ~ slug.replace('-', '_') %}
 <div class="page-head">
   <h1>{{ cfg.title }} <span class="badge blue">{{ khu_vuc_hien_tai }}</span></h1>
-  <a class="btn" href="{{ url_for(base ~ '.create_view') }}">+ Them moi</a>
+  {% if not cfg.readonly %}<a class="btn" href="{{ url_for(base ~ '.create_view') }}">+ Them moi</a>{% endif %}
 </div>
+{% if cfg.readonly %}<div class="flash info">Danh sach chi de xem. Quan he quan ly duoc tao tu dong khi them nhan vien toa nha.</div>{% endif %}
 <div class="card" style="padding:0;overflow:hidden;">
   <table>
-    <thead><tr>{% for col, label in cfg.list_cols %}<th>{{ label }}</th>{% endfor %}<th style="width:150px;">Thao tac</th></tr></thead>
+    <thead><tr>{% for col, label in cfg.list_cols %}<th>{{ label }}</th>{% endfor %}{% if not cfg.readonly %}<th style="width:150px;">Thao tac</th>{% endif %}</tr></thead>
     <tbody>
       {% for row in rows %}
       <tr>
@@ -19,12 +20,14 @@
             {% else %}{{ v if v is not none else '—' }}{% endif %}
           </td>
         {% endfor %}
+        {% if not cfg.readonly %}
         <td>
           <a class="btn sm secondary" href="{{ url_for(base ~ '.edit_view', item_id=row[cfg.pk]) }}">Sua</a>
           <form class="inline" method="post" action="{{ url_for(base ~ '.delete_view', item_id=row[cfg.pk]) }}" onsubmit="return confirm('Xoa?');"><button class="btn sm danger">Xoa</button></form>
         </td>
+        {% endif %}
       </tr>
-      {% else %}<tr><td colspan="{{ cfg.list_cols|length + 1 }}" style="text-align:center;color:#64748b;padding:24px;">Chua co du lieu.</td></tr>{% endfor %}
+      {% else %}<tr><td colspan="{{ cfg.list_cols|length + (0 if cfg.readonly else 1) }}" style="text-align:center;color:#64748b;padding:24px;">Chua co du lieu.</td></tr>{% endfor %}
     </tbody>
   </table>
 </div>
