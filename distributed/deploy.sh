@@ -24,7 +24,10 @@ run dist_hanoi  "$SQL/seed_hanoi.sql"
 run dist_danang "$SQL/seed_danang.sql"
 run dist_hcm    "$SQL/seed_hcm.sql"
 
-echo "===== FEDERATED + VIEW + PROCEDURE (chi tai HN) ====="
+echo "===== FEDERATED + VIEW (chi tai HN) ====="
 run dist_hanoi  "$SQL/federated_hanoi.sql"
+
+echo "===== TRIGGER RANG BUOC NGHIEP VU (ca 3 node) ====="
+for c in dist_hanoi dist_danang dist_hcm; do run "$c" "$SQL/triggers.sql"; done
 
 echo "===== XONG ====="
