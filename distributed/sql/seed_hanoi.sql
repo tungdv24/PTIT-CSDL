@@ -52,3 +52,7 @@ INSERT INTO PHAN_CONG_CONG_VIEC (ma_phan_cong, ma_nhan_vien_toa_nha, ma_vi_tri, 
 INSERT INTO LUONG_NHAN_VIEN (ma_luong, ma_nhan_vien_toa_nha, thang, nam, luong_co_ban, doanh_thu_dich_vu, tien_thuong, tong_luong, trang_thai) VALUES
 (1,1,4,2026,20000000,0,0,20000000,'DA_CHI'),
 (2,2,4,2026,12000000,2250000,67500,12067500,'DA_CHI');
+
+-- Phan cap quan ly NV toa nha HN: BQL-001 (id 1) quan ly BQL-002 (id 2)
+INSERT INTO QUAN_LY_NHAN_VIEN (ma_nhan_vien, ma_nguoi_quan_ly, ngay_bat_dau) VALUES
+(2, 1, '2026-01-01');

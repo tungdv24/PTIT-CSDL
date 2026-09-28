@@ -13,7 +13,6 @@ USE QuanLyToaNha;
 DROP TRIGGER IF EXISTS trg_cthd_after_insert;
 DROP TRIGGER IF EXISTS trg_cthd_after_delete;
 DROP TRIGGER IF EXISTS trg_cthd_no_change_vp;
-DROP TRIGGER IF EXISTS trg_quanly_no_self;
 DROP TRIGGER IF EXISTS trg_hoadon_before_insert;
 DROP TRIGGER IF EXISTS trg_hoadon_before_update;
 
@@ -140,6 +139,22 @@ BEGIN
     IF NEW.ngay_ket_thuc < NEW.ngay_bat_dau THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Ngay ket thuc hop dong phai >= ngay bat dau';
+    END IF;
+END$$
+DELIMITER ;
+
+-- ---------------------------------------------------------------------
+-- 6) Nhan vien toa nha khong the tu quan ly chinh minh (bang QUAN_LY_NHAN_VIEN)
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_quanly_no_self;
+DELIMITER $$
+CREATE TRIGGER trg_quanly_no_self
+BEFORE INSERT ON QUAN_LY_NHAN_VIEN
+FOR EACH ROW
+BEGIN
+    IF NEW.ma_nhan_vien = NEW.ma_nguoi_quan_ly THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Nhan vien khong the tu quan ly chinh minh';
     END IF;
 END$$
 DELIMITER ;

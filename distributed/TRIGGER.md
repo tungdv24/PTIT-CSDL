@@ -15,6 +15,7 @@ File ma nguon: `distributed/sql/triggers.sql`. Ban phan tan **khong dung stored 
 | 3 | `trg_vanphong_no_edit_when_used` | BEFORE UPDATE `VAN_PHONG` | Chan sua cot nghiep vu (ky_hieu, tang, dien_tich, don_gia_m2) khi VP dang duoc thue; van cho doi `trang_thai` |
 | 4 | `trg_sudung_check_company` | BEFORE INSERT `SU_DUNG_DICH_VU` | NVCT **chi dung dich vu cong ty minh** da dang ky |
 | 5 | `trg_hopdong_check_ngay_insert` / `_update` | BEFORE INSERT/UPDATE `HOP_DONG_THUE` | Kiem tra ngay hop dong: `ngay_ket_thuc >= ngay_bat_dau` |
+| 6 | `trg_quanly_no_self` | BEFORE INSERT `QUAN_LY_NHAN_VIEN` | Nhan vien toa nha **khong the tu quan ly chinh minh** |
 
 ## Cach demo (chay tren mot node bat ky, vd dist_danang)
 

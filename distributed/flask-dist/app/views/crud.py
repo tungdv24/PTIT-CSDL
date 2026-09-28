@@ -109,6 +109,21 @@ ENTITIES = {
             F("trang_thai", "Trang thai", type="select", options=["DANG_DUNG", "TAM_DUNG", "DA_HUY"]),
         ],
     },
+    "quan-ly-nhan-vien": {
+        "table": "QUAN_LY_NHAN_VIEN", "pk": "ma_quan_ly", "title": "Phan cap quan ly NV toa nha",
+        "list_cols": [("ma_quan_ly", "Ma"), ("ma_nhan_vien", "NV (cap duoi)"),
+                      ("ma_nguoi_quan_ly", "Nguoi quan ly"), ("ngay_bat_dau", "Tu"), ("ngay_ket_thuc", "Den")],
+        "fields": [
+            F("ma_nhan_vien", "Nhan vien (cap duoi)", type="select", required=True,
+              fk=("SELECT ma_nhan_vien_toa_nha, CONCAT(ma_so_nhan_vien,' - ',ho_ten) AS ten FROM NHAN_VIEN_TOA_NHA ORDER BY ma_so_nhan_vien",
+                  "ma_nhan_vien_toa_nha", "ten")),
+            F("ma_nguoi_quan_ly", "Nguoi quan ly (cap tren)", type="select", required=True,
+              fk=("SELECT ma_nhan_vien_toa_nha, CONCAT(ma_so_nhan_vien,' - ',ho_ten) AS ten FROM NHAN_VIEN_TOA_NHA ORDER BY ma_so_nhan_vien",
+                  "ma_nhan_vien_toa_nha", "ten")),
+            F("ngay_bat_dau", "Ngay bat dau", type="date", required=True),
+            F("ngay_ket_thuc", "Ngay ket thuc", type="date"),
+        ],
+    },
     "chi-phi": {
         "table": "CHI_PHI_TOA_NHA", "pk": "ma_chi_phi", "title": "Chi phi toa nha",
         "list_cols": [("ma_chi_phi", "Ma"), ("ma_loai_chi_phi", "Loai"), ("noi_dung", "Noi dung"),
