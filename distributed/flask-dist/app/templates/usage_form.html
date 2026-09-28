@@ -8,6 +8,13 @@
 <div class="card" style="max-width:560px;">
   {% if is_self %}<div class="flash info">Ban dang ghi su dung cho chinh minh.</div>{% endif %}
   <form method="post" id="f">
+    {% if not is_self %}
+    <label>Nhan vien cong ty <span style="color:#dc2626;">*</span></label>
+    <select name="ma_nhan_vien" required>
+      <option value="">-- Chon nhan vien --</option>
+      {% for nv in nhan_viens %}<option value="{{ nv.ma_nhan_vien }}">{{ nv.ho_ten }} ({{ nv.ma_so_nhan_vien }})</option>{% endfor %}
+    </select>
+    {% endif %}
     <label>Dich vu (theo luot) <span style="color:#dc2626;">*</span></label>
     <select name="ma_dang_ky" id="dk" required>
       <option value="">-- Chon dich vu --</option>

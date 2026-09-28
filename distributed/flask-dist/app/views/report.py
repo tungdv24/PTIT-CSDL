@@ -3,13 +3,16 @@ from flask import Blueprint, render_template, request
 from flask_login import current_user
 
 from .. import db
-from ..auth import head_office_only
+from ..auth import roles_required
 
 bp = Blueprint("report", __name__, url_prefix="/tong-hop")
 
+# Bao cao tong hop luon truy van tren node HN (noi co FEDERATED + VIEW),
+# nen admin o BAT KY chi nhanh nao cung xem duoc toan he thong.
+
 
 @bp.route("/cong-ty")
-@head_office_only
+@roles_required()   # ADMIN (moi chi nhanh)
 def cong_ty_toan_quoc():
     # VW_Global_CONG_TY gop du lieu HN (cuc bo) + DN + HCM (qua FEDERATED)
     rows = db.query_all("SELECT * FROM VW_Global_CONG_TY ORDER BY chi_nhanh, ma_cong_ty",
@@ -18,7 +21,7 @@ def cong_ty_toan_quoc():
 
 
 @bp.route("/nhan-vien-toa-nha")
-@head_office_only
+@roles_required()
 def nhan_vien_toan_quoc():
     rows = db.query_all("SELECT * FROM VW_Global_NHAN_VIEN_TOA_NHA ORDER BY chi_nhanh, ma_nhan_vien_toa_nha",
                         khu_vuc="HN")
@@ -26,7 +29,7 @@ def nhan_vien_toan_quoc():
 
 
 @bp.route("/hoa-don")
-@head_office_only
+@roles_required()
 def hoa_don_toan_quoc():
     thang = request.args.get("thang", type=int) or 4
     nam = request.args.get("nam", type=int) or 2026

@@ -91,5 +91,9 @@ def create_view():
             """SELECT dk.ma_dang_ky, dk.don_gia, dv.ten_dich_vu
                FROM DANG_KY_DICH_VU dk JOIN DICH_VU dv ON dv.ma_dich_vu=dk.ma_dich_vu
                WHERE dk.trang_thai='DANG_DUNG' AND dv.cach_tinh_phi='THEO_LUOT'""")
+    # ADMIN duoc chon nhan vien; NVCT thi khoa vao chinh minh (khong can danh sach).
+    nhan_viens = [] if me else db.query_all(
+        "SELECT ma_nhan_vien, ma_so_nhan_vien, ho_ten FROM NHAN_VIEN_CONG_TY ORDER BY ho_ten")
     today = datetime.date.today().isoformat()
-    return render_template("usage_form.html", dks=dks, today=today, is_self=bool(me))
+    return render_template("usage_form.html", dks=dks, today=today, is_self=bool(me),
+                           nhan_viens=nhan_viens)
