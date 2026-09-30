@@ -6,10 +6,36 @@ xem toan he thong.
 """
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import OperationalError
 from flask import g, session
 
 _engines: dict[str, Engine] = {}
 _cfg = None
+
+
+def _retry(fn):
+    """Thu lai 1 lan neu gap loi ket noi tam thoi.
+
+    Storage engine FEDERATED (HN doc DN/HCM) giu ket noi cache toi node remote;
+    khi node remote dong ket noi do idle (wait_timeout) thi truy van dau tien
+    bao loi 1160 'Got an error writing communication packets' / 2006 'server has
+    gone away'. Lan thu 2 FEDERATED mo lai ket noi -> thanh cong. pool_pre_ping
+    chi kiem tra ket noi tu app -> node, KHONG kiem tra duoc ket noi federated
+    ben trong MySQL, nen can retry o day.
+    """
+    import functools
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except OperationalError as e:
+            code = e.orig.args[0] if getattr(e, "orig", None) and e.orig.args else None
+            if code in (1160, 2006, 2013):  # loi ket noi tam thoi
+                return fn(*args, **kwargs)
+            raise
+
+    return wrapper
 
 
 def init_engines(cfg):
@@ -37,12 +63,14 @@ def _engine() -> Engine:
 
 
 # --- Truy van tren node hien tai (theo chi nhanh dang dang nhap) ---
+@_retry
 def query_all(sql, params=None, khu_vuc=None):
     eng = engine_for(khu_vuc) if khu_vuc else _engine()
     with eng.connect() as conn:
         return [dict(r) for r in conn.execute(text(sql), params or {}).mappings().all()]
 
 
+@_retry
 def query_one(sql, params=None, khu_vuc=None):
     eng = engine_for(khu_vuc) if khu_vuc else _engine()
     with eng.connect() as conn:
@@ -50,6 +78,7 @@ def query_one(sql, params=None, khu_vuc=None):
         return dict(row) if row else None
 
 
+@_retry
 def scalar(sql, params=None, khu_vuc=None):
     eng = engine_for(khu_vuc) if khu_vuc else _engine()
     with eng.connect() as conn:

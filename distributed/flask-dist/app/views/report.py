@@ -31,7 +31,7 @@ def nhan_vien_toan_quoc():
 @bp.route("/hoa-don")
 @roles_required()
 def hoa_don_toan_quoc():
-    thang = request.args.get("thang", type=int) or 4
+    thang = request.args.get("thang", type=int) or 9
     nam = request.args.get("nam", type=int) or 2026
     rows = db.query_all(
         """SELECT * FROM VW_Global_HOA_DON WHERE thang=:t AND nam=:n
