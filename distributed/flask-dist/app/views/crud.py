@@ -105,7 +105,12 @@ ENTITIES = {
     "nhan-vien-cong-ty": {
         "table": "NHAN_VIEN_CONG_TY", "pk": "ma_nhan_vien", "title": "Nhân viên công ty",
         "list_cols": [("ma_nhan_vien", "Mã"), ("ma_so_nhan_vien", "Mã NV"), ("ho_ten", "Họ tên"),
-                      ("chuc_vu", "Chức vụ"), ("trang_thai", "Trạng thái")],
+                      ("ten_cong_ty", "Công ty"), ("chuc_vu", "Chức vụ"), ("trang_thai", "Trạng thái")],
+        "list_sql": """SELECT nv.ma_nhan_vien, nv.ma_so_nhan_vien, nv.ho_ten,
+                              ct.ten_cong_ty, nv.chuc_vu, nv.trang_thai
+                       FROM NHAN_VIEN_CONG_TY nv
+                       LEFT JOIN CONG_TY ct ON ct.ma_cong_ty = nv.ma_cong_ty
+                       ORDER BY nv.ma_nhan_vien DESC""",
         "fields": [
             F("ma_so_nhan_vien", "Mã số nhân viên", required=True),
             F("ma_cong_ty", "Công ty", type="select", required=True,
