@@ -68,3 +68,4 @@
 - ADMIN chi nhanh (DN/HCM) **khong** vao duoc menu "Tong hop toan quoc" (bao 403) - do la dac quyen tru so HN.
 - Dang nhap sai chi nhanh (vd CT-05 o chi nhanh HN) se bao loi vi user do khong ton tai o node HN.
 - **Hoa don thang 8 & 9/2026** da duoc tinh san (tien thue + dich vu co dinh). Dich vu THEO_LUOT (an uong/gui xe) chua tinh - se cong sau khi nhap su dung dich vu theo ngay.
+- **Luong nhan vien toa nha thang 8 & 9/2026** da tinh san theo VI TRI CONG VIEC (cot ma_vi_tri): tong_luong = luong_co_ban (theo vi tri) + thuong (doanh thu dich vu * ty_le). Moi chi nhanh co 1 Quan ly toa nha + 4 vi tri nhan vien.

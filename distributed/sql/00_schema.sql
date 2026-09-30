@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS NHAN_VIEN_TOA_NHA (
     so_dien_thoai VARCHAR(20) NOT NULL,
     email VARCHAR(100),
     khu_vuc VARCHAR(10) NOT NULL DEFAULT 'HN',   -- HN / DN / HCM (thuoc tinh phan manh)
+    ma_vi_tri INT,                               -- FK -> VI_TRI_CONG_VIEC (danh muc nhan ban)
     ngay_vao_lam DATE NOT NULL,
     trang_thai VARCHAR(20) DEFAULT 'DANG_LAM'
 );

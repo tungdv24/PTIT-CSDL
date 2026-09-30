@@ -12,7 +12,7 @@ bp = Blueprint("finance", __name__)
 @bp.route("/hoa-don")
 @roles_required("CONG_TY")
 def hoa_don_list():
-    thang = request.args.get("thang", type=int) or 4
+    thang = request.args.get("thang", type=int) or 9
     nam = request.args.get("nam", type=int) or 2026
     where = "WHERE hd.thang=:t AND hd.nam=:n"
     params = {"t": thang, "n": nam}
@@ -56,7 +56,7 @@ def hoa_don_thanh_toan(ma_hoa_don):
 @bp.route("/luong")
 @roles_required("BQL")
 def luong_list():
-    thang = request.args.get("thang", type=int) or 4
+    thang = request.args.get("thang", type=int) or 9
     nam = request.args.get("nam", type=int) or 2026
     where = "WHERE l.thang=:t AND l.nam=:n"
     params = {"t": thang, "n": nam}

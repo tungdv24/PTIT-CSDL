@@ -80,7 +80,13 @@ ENTITIES = {
         "table": "NHAN_VIEN_TOA_NHA", "pk": "ma_nhan_vien_toa_nha", "title": "Nhân viên tòa nhà",
         "after_create": _auto_gan_quan_ly,
         "list_cols": [("ma_nhan_vien_toa_nha", "Mã"), ("ma_so_nhan_vien", "Mã NV"), ("ho_ten", "Họ tên"),
-                      ("khu_vuc", "Khu vực"), ("so_dien_thoai", "SĐT"), ("trang_thai", "Trạng thái")],
+                      ("ten_vi_tri", "Vị trí"), ("khu_vuc", "Khu vực"), ("so_dien_thoai", "SĐT"),
+                      ("trang_thai", "Trạng thái")],
+        "list_sql": """SELECT nv.ma_nhan_vien_toa_nha, nv.ma_so_nhan_vien, nv.ho_ten,
+                              v.ten_vi_tri, nv.khu_vuc, nv.so_dien_thoai, nv.trang_thai
+                       FROM NHAN_VIEN_TOA_NHA nv
+                       LEFT JOIN VI_TRI_CONG_VIEC v ON v.ma_vi_tri = nv.ma_vi_tri
+                       ORDER BY nv.ma_nhan_vien_toa_nha DESC""",
         "fields": [
             F("ma_so_nhan_vien", "Mã số nhân viên", required=True),
             F("ho_ten", "Họ tên", required=True),
@@ -89,6 +95,9 @@ ENTITIES = {
             F("so_dien_thoai", "Số điện thoại", required=True),
             F("email", "Email"),
             F("khu_vuc", "Khu vực", type="select", options=["HN", "DN", "HCM"], required=True),
+            F("ma_vi_tri", "Vị trí công việc", type="select", required=True,
+              fk=("SELECT ma_vi_tri, ten_vi_tri FROM VI_TRI_CONG_VIEC ORDER BY ma_vi_tri",
+                  "ma_vi_tri", "ten_vi_tri")),
             F("ngay_vao_lam", "Ngày vào làm", type="date", required=True),
             F("trang_thai", "Trạng thái", type="select", options=["DANG_LAM", "DA_NGHI"]),
         ],
