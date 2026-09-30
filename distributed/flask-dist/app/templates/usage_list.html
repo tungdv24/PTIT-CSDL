@@ -1,27 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Su dung dich vu{% endblock %}
+{% block title %}Sử dụng dịch vụ{% endblock %}
 {% block content %}
 <div class="page-head">
-  <h1>Su dung dich vu <span class="badge blue">{{ khu_vuc_hien_tai }}</span></h1>
-  <a class="btn" href="{{ url_for('usage.create_view') }}">+ Ghi nhan su dung</a>
+  <h1>Sử dụng dịch vụ <span class="badge blue">{{ khu_vuc_hien_tai }}</span></h1>
+  <a class="btn" href="{{ url_for('usage.create_view') }}">+ Ghi nhận sử dụng</a>
 </div>
-{% if is_self %}<div class="flash info">Ban dang xem lich su su dung cua chinh minh.</div>{% endif %}
+{% if is_self %}<div class="flash info">Bạn đang xem lịch sử sử dụng của chính mình.</div>{% endif %}
 <div class="card">
   <form class="toolbar" method="get">
-    <select name="thang">{% for m in range(1,13) %}<option value="{{ m }}" {{ 'selected' if m==thang }}>Thang {{ m }}</option>{% endfor %}</select>
+    <select name="thang">{% for m in range(1,13) %}<option value="{{ m }}" {{ 'selected' if m==thang }}>Tháng {{ m }}</option>{% endfor %}</select>
     <select name="nam">{% for y in [2025,2026,2027] %}<option value="{{ y }}" {{ 'selected' if y==nam }}>{{ y }}</option>{% endfor %}</select>
-    <button class="btn secondary">Loc</button>
+    <button class="btn secondary">Lọc</button>
   </form>
 </div>
 <div class="card" style="padding:0;overflow:hidden;">
   <table>
-    <thead><tr><th>Ngay</th><th>Nhan vien</th><th>Dich vu</th><th>SL</th><th>Don gia</th><th>Thanh tien</th><th>Ghi chu</th></tr></thead>
+    <thead><tr><th>Ngày</th><th>Nhân viên</th><th>Dịch vụ</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th><th>Ghi chú</th></tr></thead>
     <tbody>
       {% for r in rows %}
       <tr><td>{{ r.ngay_su_dung }}</td><td>{{ r.ho_ten }}</td><td>{{ r.ten_dich_vu }}</td><td>{{ r.so_luong }}</td>
         <td>{{ r.don_gia|money }} đ</td><td><strong>{{ r.thanh_tien|money }} đ</strong></td><td style="color:#64748b;">{{ r.ghi_chu or '' }}</td></tr>
-      {% else %}<tr><td colspan="7" style="text-align:center;color:#64748b;padding:24px;">Chua co du lieu.</td></tr>{% endfor %}
-      {% if rows %}<tr style="background:#f8fafc;"><td colspan="5" style="text-align:right;"><strong>TONG</strong></td><td><strong>{{ tong|money }} đ</strong></td><td></td></tr>{% endif %}
+      {% else %}<tr><td colspan="7" style="text-align:center;color:#64748b;padding:24px;">Chưa có dữ liệu.</td></tr>{% endfor %}
+      {% if rows %}<tr style="background:#f8fafc;"><td colspan="5" style="text-align:right;"><strong>TỔNG</strong></td><td><strong>{{ tong|money }} đ</strong></td><td></td></tr>{% endif %}
     </tbody>
   </table>
 </div>

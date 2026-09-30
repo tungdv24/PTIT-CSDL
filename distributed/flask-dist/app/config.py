@@ -13,17 +13,17 @@ class Config:
     # 3 node phan tan: chi nhanh -> host container.
     NODES = {
         "HN": {
-            "ten": "Ha Noi (Tru so chinh)",
+            "ten": "Hà Nội (Trụ sở chính)",
             "host": os.environ.get("NODE_HANOI_HOST", "db_hanoi"),
             "is_head": True,   # tru so chinh: co bao cao tong hop
         },
         "DN": {
-            "ten": "Da Nang (Chi nhanh)",
+            "ten": "Đà Nẵng (Chi nhánh)",
             "host": os.environ.get("NODE_DANANG_HOST", "db_danang"),
             "is_head": False,
         },
         "HCM": {
-            "ten": "TP.HCM (Chi nhanh)",
+            "ten": "TP.HCM (Chi nhánh)",
             "host": os.environ.get("NODE_HCM_HOST", "db_hcm"),
             "is_head": False,
         },

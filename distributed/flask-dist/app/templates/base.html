@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Quan ly toa nha (Phan tan){% endblock %}</title>
+  <title>{% block title %}Quản lý tòa nhà (Phân tán){% endblock %}</title>
   <style>
     :root{--bg:#f4f6fb;--card:#fff;--line:#e2e8f0;--primary:#2563eb;--text:#1e293b;--muted:#64748b;}
     *{box-sizing:border-box;} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
@@ -40,36 +40,36 @@
 {% set role = current_user.vai_tro %}
 <div class="layout">
   <aside class="sidebar">
-    <div class="brand">🏢 Toa nha (Phan tan)</div>
+    <div class="brand">🏢 Tòa nhà (Phân tán)</div>
     <div class="branch">📍 {{ chi_nhanh_hien_tai }}</div>
-    <a href="{{ url_for('dashboard.index') }}">📊 Dashboard</a>
+    <a href="{{ url_for('dashboard.index') }}">📊 Trang tổng quan</a>
     {% if current_user.is_admin %}
-      <div class="group">Quan ly (node {{ khu_vuc_hien_tai }})</div>
-      <a href="{{ url_for('crud_cong_ty.list_view') }}">Cong ty</a>
-      <a href="{{ url_for('crud_van_phong.list_view') }}">Van phong</a>
-      <a href="{{ url_for('crud_hop_dong.list_view') }}">Hop dong thue</a>
-      <a href="{{ url_for('crud_nhan_vien_cong_ty.list_view') }}">Nhan vien cong ty</a>
-      <a href="{{ url_for('crud_nhan_vien_toa_nha.list_view') }}">Nhan vien toa nha</a>
-      <a href="{{ url_for('crud_quan_ly_nhan_vien.list_view') }}">Phan cap quan ly NV</a>
-      <a href="{{ url_for('crud_dang_ky_dich_vu.list_view') }}">Dang ky dich vu</a>
-      <div class="group">Dich vu (node {{ khu_vuc_hien_tai }})</div>
-      <a href="{{ url_for('usage.list_view') }}">Su dung dich vu (ngay)</a>
-      <div class="group">Tai chinh (node {{ khu_vuc_hien_tai }})</div>
-      <a href="{{ url_for('finance.hoa_don_list') }}">Hoa don</a>
-      <a href="{{ url_for('finance.luong_list') }}">Luong nhan vien</a>
-      <div class="group">Tong hop toan he thong</div>
-      <a href="{{ url_for('report.cong_ty_toan_quoc') }}">Cong ty toan quoc</a>
-      <a href="{{ url_for('report.nhan_vien_toan_quoc') }}">Nhan vien toa nha toan quoc</a>
-      <a href="{{ url_for('report.hoa_don_toan_quoc') }}">Hoa don toan quoc</a>
+      <div class="group">Quản lý (node {{ khu_vuc_hien_tai }})</div>
+      <a href="{{ url_for('crud_cong_ty.list_view') }}">Công ty</a>
+      <a href="{{ url_for('crud_van_phong.list_view') }}">Văn phòng</a>
+      <a href="{{ url_for('crud_hop_dong.list_view') }}">Hợp đồng thuê</a>
+      <a href="{{ url_for('crud_nhan_vien_cong_ty.list_view') }}">Nhân viên công ty</a>
+      <a href="{{ url_for('crud_nhan_vien_toa_nha.list_view') }}">Nhân viên tòa nhà</a>
+      <a href="{{ url_for('crud_quan_ly_nhan_vien.list_view') }}">Phân cấp quản lý NV</a>
+      <a href="{{ url_for('crud_dang_ky_dich_vu.list_view') }}">Đăng ký dịch vụ</a>
+      <div class="group">Dịch vụ (node {{ khu_vuc_hien_tai }})</div>
+      <a href="{{ url_for('usage.list_view') }}">Sử dụng dịch vụ (ngày)</a>
+      <div class="group">Tài chính (node {{ khu_vuc_hien_tai }})</div>
+      <a href="{{ url_for('finance.hoa_don_list') }}">Hóa đơn</a>
+      <a href="{{ url_for('finance.luong_list') }}">Lương nhân viên</a>
+      <div class="group">Tổng hợp toàn hệ thống</div>
+      <a href="{{ url_for('report.cong_ty_toan_quoc') }}">Công ty toàn quốc</a>
+      <a href="{{ url_for('report.nhan_vien_toan_quoc') }}">Nhân viên tòa nhà toàn quốc</a>
+      <a href="{{ url_for('report.hoa_don_toan_quoc') }}">Hóa đơn toàn quốc</a>
     {% elif role == 'BQL' %}
-      <div class="group">Nhan vien toa nha</div>
-      <a href="{{ url_for('finance.luong_list') }}">Luong cua toi</a>
+      <div class="group">Nhân viên tòa nhà</div>
+      <a href="{{ url_for('finance.luong_list') }}">Lương của tôi</a>
     {% elif role == 'NVCT' %}
-      <div class="group">Dich vu cua toi</div>
-      <a href="{{ url_for('usage.list_view') }}">Dang ky su dung dich vu</a>
+      <div class="group">Dịch vụ của tôi</div>
+      <a href="{{ url_for('usage.list_view') }}">Đăng ký sử dụng dịch vụ</a>
     {% elif role == 'CONG_TY' %}
-      <div class="group">Cong ty cua toi</div>
-      <a href="{{ url_for('finance.hoa_don_list') }}">Hoa don cua cong ty</a>
+      <div class="group">Công ty của tôi</div>
+      <a href="{{ url_for('finance.hoa_don_list') }}">Hóa đơn của công ty</a>
     {% endif %}
   </aside>
   <div class="main">
@@ -77,7 +77,7 @@
       <div><span class="badge blue">{{ khu_vuc_hien_tai }}</span> {{ chi_nhanh_hien_tai }}</div>
       <div class="toolbar">
         <span>{{ current_user.ho_ten }} <span class="badge">{{ role }}</span></span>
-        <a class="btn sm secondary" href="{{ url_for('auth.logout') }}">Dang xuat</a>
+        <a class="btn sm secondary" href="{{ url_for('auth.logout') }}">Đăng xuất</a>
       </div>
     </div>
     <div class="content">

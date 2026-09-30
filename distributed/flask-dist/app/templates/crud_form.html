@@ -4,7 +4,7 @@
 {% set base = 'crud_' ~ slug.replace('-', '_') %}
 <div class="page-head">
   <h1>{{ 'Sua' if row else 'Them' }} {{ cfg.title }}</h1>
-  <a class="btn secondary" href="{{ url_for(base ~ '.list_view') }}">← Quay lai</a>
+  <a class="btn secondary" href="{{ url_for(base ~ '.list_view') }}">← Quay lại</a>
 </div>
 <div class="card" style="max-width:640px;">
   <form method="post">
@@ -27,7 +27,7 @@
       <input type="{{ f.type }}" name="{{ f.name }}" value="{{ current }}" {{ 'step=any' if f.type=='number' }} {{ 'required' if f.required }}>
     {% endif %}
     {% endfor %}
-    <div style="margin-top:20px;"><button class="btn">{{ 'Cap nhat' if row else 'Them moi' }}</button></div>
+    <div style="margin-top:20px;"><button class="btn">{{ 'Cập nhật' if row else 'Thêm mới' }}</button></div>
   </form>
 </div>
 {% endblock %}
