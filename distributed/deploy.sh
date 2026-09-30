@@ -10,7 +10,9 @@ SQL=/root/office-dist/distributed/sql   # duong dan file sql tren server
 
 run() {  # run <container> <sqlfile>
   echo ">> $1 <= $(basename "$2")"
-  docker exec -i "$1" mysql -uroot -p"$PW" < "$2" 2>&1 | grep -v "Using a password" || true
+  # --default-character-set=utf8mb4: BAT BUOC, neu khong client mysql mac dinh
+  # latin1 se lam hong tieng Viet trong file seed (loi mojibake "CÃ´ng ty").
+  docker exec -i "$1" mysql --default-character-set=utf8mb4 -uroot -p"$PW" < "$2" 2>&1 | grep -v "Using a password" || true
 }
 
 echo "===== SCHEMA (ca 3 node) ====="
