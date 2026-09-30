@@ -52,6 +52,10 @@
       <a href="{{ url_for('crud_nhan_vien_toa_nha.list_view') }}">Nhân viên tòa nhà</a>
       <a href="{{ url_for('crud_quan_ly_nhan_vien.list_view') }}">Phân cấp quản lý NV</a>
       <a href="{{ url_for('crud_dang_ky_dich_vu.list_view') }}">Đăng ký dịch vụ</a>
+      <div class="group">Danh mục chung (cả 3 node)</div>
+      <a href="{{ url_for('crud_dich_vu.list_view') }}">Dịch vụ</a>
+      <a href="{{ url_for('crud_loai_chi_phi.list_view') }}">Loại chi phí</a>
+      <a href="{{ url_for('crud_vi_tri_cong_viec.list_view') }}">Vị trí công việc</a>
       <div class="group">Dịch vụ (node {{ khu_vuc_hien_tai }})</div>
       <a href="{{ url_for('usage.list_view') }}">Sử dụng dịch vụ (ngày)</a>
       <div class="group">Tài chính (node {{ khu_vuc_hien_tai }})</div>

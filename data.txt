@@ -1,0 +1,80 @@
+10 cong ty
+Công ty TNHH Công nghệ Việt Tân
+Công ty Cổ phần An Phát Solutions
+Công ty TNHH Minh Long Tech
+Công ty Cổ phần Đại Việt Digital
+Công ty TNHH Hưng Thịnh Services
+Công ty Cổ phần Nam Việt Innovation
+Công ty TNHH Phúc An Technology
+Công ty Cổ phần Thành Công Group
+Công ty TNHH Việt Nhật Solutions
+Công ty Cổ phần Tân Tiến Systems
+
+50 nhân viên công ty
+Nguyễn Minh Anh
+Trần Hoàng Nam
+Lê Quốc Huy
+Phạm Minh Tuấn
+Hoàng Đức Anh
+Võ Thành Đạt
+Đặng Quang Huy
+Bùi Anh Khoa
+Đỗ Minh Quân
+Ngô Gia Bảo
+Phan Nhật Minh
+Vũ Hoàng Long
+Hồ Tuấn Kiệt
+Dương Thành Trung
+Nguyễn Thùy Linh
+Trần Ngọc Anh
+Lê Phương Thảo
+Phạm Khánh Linh
+Hoàng Mai Anh
+Võ Ngọc Hân
+Đặng Thu Hà
+Bùi Minh Châu
+Đỗ Quỳnh Anh
+Ngô Thanh Huyền
+Phan Bảo Ngọc
+Vũ Khánh Vy
+Hồ Ngọc Mai
+Dương Hải Yến
+Nguyễn Đức Thành
+Trần Anh Dũng
+Lê Minh Khôi
+Phạm Quốc Việt
+Hoàng Anh Tuấn
+Võ Minh Hoàng
+Đặng Thành Công
+Bùi Quốc Anh
+Đỗ Hoàng Phúc
+Ngô Minh Đức
+Phan Thanh Tùng
+Vũ Minh Thư
+Hồ Ngọc Diệp
+Dương Minh Trang
+Nguyễn Hà My
+Trần Phương Uyên
+Lê Hoàng Yến
+Phạm Ngọc Linh
+Hoàng Thùy Dương
+Võ Thanh Trúc
+Đặng Mỹ Linh
+Bùi Khánh Ngân
+
+15 nhân viên toà nhà
+Nguyễn Văn Khang
+Trần Quốc Bảo
+Lê Anh Khoa
+Phạm Thành Long
+Hoàng Minh Nhật
+Võ Quang Vinh
+Đặng Đức Minh
+Bùi Thanh Sơn
+Đỗ Trọng Nghĩa
+Ngô Khắc Duy
+Phan Ngọc Khánh
+Vũ Thị Ngọc
+Hồ Quỳnh Như
+Dương Bích Ngọc
+Nguyễn Tú Anh

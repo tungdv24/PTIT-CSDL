@@ -8,6 +8,9 @@ from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 
 from .. import db
+from ..config import Config
+
+_NODES = Config.NODES
 
 
 def F(name, label, type="text", required=False, options=None, fk=None):
@@ -187,6 +190,53 @@ ENTITIES = {
 ENTITIES.pop("chi-phi", None)
 
 
+# ---------------------------------------------------------------------------
+# DANH MUC CHUNG: nhan ban giong nhau tren ca 3 node.
+# Khi them/sua/xoa phai ghi len CA 3 node voi CUNG mot khoa chinh (ma_*) de
+# du lieu dong bo. Vi vay dat "replicated": True va PK duoc cap phat thu cong
+# (MAX + 1 tren tat ca node) khi INSERT.
+# ---------------------------------------------------------------------------
+CATALOG_ENTITIES = {
+    "dich-vu": {
+        "table": "DICH_VU", "pk": "ma_dich_vu", "title": "Dịch vụ", "replicated": True,
+        "list_cols": [("ma_dich_vu", "Mã"), ("ma_so_dich_vu", "Mã DV"), ("ten_dich_vu", "Tên dịch vụ"),
+                      ("loai_dich_vu", "Loại"), ("cach_tinh_phi", "Cách tính phí"),
+                      ("don_gia_co_ban", "Đơn giá cơ bản"), ("don_vi_tinh", "Đơn vị"), ("trang_thai", "Trạng thái")],
+        "fields": [
+            F("ma_so_dich_vu", "Mã số dịch vụ", required=True),
+            F("ten_dich_vu", "Tên dịch vụ", required=True),
+            F("loai_dich_vu", "Loại dịch vụ", required=True),
+            F("cach_tinh_phi", "Cách tính phí", type="select", required=True,
+              options=["THEO_DIEN_TICH", "THEO_DAU_NGUOI", "THEO_LUOT", "TRON_GOI"]),
+            F("don_gia_co_ban", "Đơn giá cơ bản", type="number", required=True),
+            F("don_vi_tinh", "Đơn vị tính", required=True),
+            F("trang_thai", "Trạng thái", type="select", options=["HOAT_DONG", "NGUNG"]),
+        ],
+    },
+    "loai-chi-phi": {
+        "table": "LOAI_CHI_PHI", "pk": "ma_loai_chi_phi", "title": "Loại chi phí", "replicated": True,
+        "list_cols": [("ma_loai_chi_phi", "Mã"), ("ten_loai_chi_phi", "Tên loại chi phí"), ("mo_ta", "Mô tả")],
+        "fields": [
+            F("ten_loai_chi_phi", "Tên loại chi phí", required=True),
+            F("mo_ta", "Mô tả", type="textarea"),
+        ],
+    },
+    "vi-tri-cong-viec": {
+        "table": "VI_TRI_CONG_VIEC", "pk": "ma_vi_tri", "title": "Vị trí công việc", "replicated": True,
+        "list_cols": [("ma_vi_tri", "Mã"), ("ma_so_vi_tri", "Mã VT"), ("ten_vi_tri", "Tên vị trí"),
+                      ("luong_co_ban", "Lương cơ bản"), ("ty_le_doanh_thu", "Tỷ lệ DT (%)")],
+        "fields": [
+            F("ma_so_vi_tri", "Mã số vị trí", required=True),
+            F("ten_vi_tri", "Tên vị trí", required=True),
+            F("luong_co_ban", "Lương cơ bản", type="number", required=True),
+            F("ty_le_doanh_thu", "Tỷ lệ doanh thu (%)", type="number"),
+            F("mo_ta", "Mô tả", type="textarea"),
+        ],
+    },
+}
+ENTITIES.update(CATALOG_ENTITIES)
+
+
 def _resolve_fk(fields):
     for f in fields:
         if f.get("fk"):
@@ -201,6 +251,41 @@ def _collect(fields):
         raw = request.form.get(f["name"], "").strip()
         data[f["name"]] = raw if raw != "" else None
     return data
+
+
+# --- Ghi danh muc chung len CA 3 node (dong bo khoa chinh) ---
+def _next_replicated_id(table, pk):
+    """Lay khoa chinh ke tiep dung chung cho ca 3 node = MAX(pk) tren tat ca node + 1."""
+    cur_max = 0
+    for kv in _NODES:
+        m = db.scalar(f"SELECT COALESCE(MAX({pk}),0) FROM {table}", khu_vuc=kv) or 0
+        cur_max = max(cur_max, int(m))
+    return cur_max + 1
+
+
+def _replicated_insert(table, pk, data):
+    """INSERT cung mot ban ghi (co PK ro rang) len ca 3 node."""
+    new_id = _next_replicated_id(table, pk)
+    row = dict(data)
+    row[pk] = new_id
+    cols = ", ".join(row.keys())
+    ph = ", ".join(f":{k}" for k in row)
+    for kv in _NODES:
+        db.execute(f"INSERT INTO {table} ({cols}) VALUES ({ph})", row, khu_vuc=kv)
+    return new_id
+
+
+def _replicated_update(table, pk, item_id, data):
+    sets = ", ".join(f"{k}=:{k}" for k in data)
+    params = dict(data)
+    params["_id"] = item_id
+    for kv in _NODES:
+        db.execute(f"UPDATE {table} SET {sets} WHERE {pk}=:_id", params, khu_vuc=kv)
+
+
+def _replicated_delete(table, pk, item_id):
+    for kv in _NODES:
+        db.execute(f"DELETE FROM {table} WHERE {pk}=:id", {"id": item_id}, khu_vuc=kv)
 
 
 def make_crud_blueprints():
@@ -234,10 +319,14 @@ def _build(slug, cfg):
         fields = _resolve_fk([dict(f) for f in cfg["fields"]])
         if request.method == "POST":
             data = _collect(cfg["fields"])
-            cols = ", ".join(data.keys())
-            ph = ", ".join(f":{k}" for k in data)
             try:
-                new_id = db.execute(f"INSERT INTO {table} ({cols}) VALUES ({ph})", data)
+                if cfg.get("replicated"):
+                    # Danh muc chung -> ghi len ca 3 node voi cung khoa chinh.
+                    new_id = _replicated_insert(table, pk, data)
+                else:
+                    cols = ", ".join(data.keys())
+                    ph = ", ".join(f":{k}" for k in data)
+                    new_id = db.execute(f"INSERT INTO {table} ({cols}) VALUES ({ph})", data)
                 # Hook sau khi them (vd: tu gan quan ly cho nhan vien toa nha moi)
                 if cfg.get("after_create"):
                     cfg["after_create"](new_id, data)
@@ -257,10 +346,13 @@ def _build(slug, cfg):
             abort(404)
         if request.method == "POST":
             data = _collect(cfg["fields"])
-            sets = ", ".join(f"{k}=:{k}" for k in data)
-            data["_id"] = item_id
             try:
-                db.execute(f"UPDATE {table} SET {sets} WHERE {pk}=:_id", data)
+                if cfg.get("replicated"):
+                    _replicated_update(table, pk, item_id, data)
+                else:
+                    sets = ", ".join(f"{k}=:{k}" for k in data)
+                    data["_id"] = item_id
+                    db.execute(f"UPDATE {table} SET {sets} WHERE {pk}=:_id", data)
                 flash(f"Da cap nhat {cfg['title']}.", "success")
                 return redirect(url_for(f"crud_{slug.replace('-', '_')}.list_view"))
             except SQLAlchemyError as e:
@@ -272,7 +364,10 @@ def _build(slug, cfg):
     def delete_view(item_id):
         _guard()
         try:
-            db.execute(f"DELETE FROM {table} WHERE {pk}=:id", {"id": item_id})
+            if cfg.get("replicated"):
+                _replicated_delete(table, pk, item_id)
+            else:
+                db.execute(f"DELETE FROM {table} WHERE {pk}=:id", {"id": item_id})
             flash(f"Da xoa {cfg['title']}.", "success")
         except SQLAlchemyError as e:
             flash(f"Khong the xoa: {getattr(e, 'orig', e)}", "danger")
