@@ -17,8 +17,9 @@ import random, unicodedata, os
 
 random.seed(20260930)  # co dinh de tai lap
 
-HERE = os.path.dirname(__file__)
-DATA = os.path.join(HERE, "..", "..", "data.txt")
+HERE = os.path.dirname(__file__)                 # .../distributed/sql/tools
+SQL_DIR = os.path.join(HERE, "..")               # .../distributed/sql  (noi ghi file seed)
+DATA = os.path.join(HERE, "..", "..", "..", "data.txt")  # goc repo/data.txt
 
 
 def read_data():
@@ -62,9 +63,9 @@ def email_from(name, dom):
 
 # Phan bo cong ty -> chi nhanh
 BRANCHES = {
-    "HN": {"file": "seed_data_hanoi.sql", "cty_idx": [0, 1, 2, 3], "bql_slice": (0, 5)},
-    "DN": {"file": "seed_data_danang.sql", "cty_idx": [4, 5, 6], "bql_slice": (5, 10)},
-    "HCM": {"file": "seed_data_hcm.sql", "cty_idx": [7, 8, 9], "bql_slice": (10, 15)},
+    "HN": {"file": "02_seed_hanoi.sql", "cty_idx": [0, 1, 2, 3], "bql_slice": (0, 5)},
+    "DN": {"file": "02_seed_danang.sql", "cty_idx": [4, 5, 6], "bql_slice": (5, 10)},
+    "HCM": {"file": "02_seed_hcm.sql", "cty_idx": [7, 8, 9], "bql_slice": (10, 15)},
 }
 VITRI = [1, 2, 3, 4, 5]  # ma_vi_tri co san trong danh muc
 # Dich vu co dinh de tinh hoa don (ma_dich_vu, cach_tinh, don_gia goi y)
@@ -174,11 +175,12 @@ def gen():
             nm = bql[bid - 1]
             code = f"BQL-{bid:03d}"
             gt = random.choice(["NAM", "NU"])
-            vitri = 1 if bid == manager else random.choice([2, 3, 4, 5])
+            # Vi tri: quan ly node -> 1 (Quan ly toa nha); con lai luan phien 2..5
+            vitri = 1 if bid == manager else (2 + ((bid - a - 1) % 4))
             lines.append(
-                f"INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ngay_vao_lam, trang_thai) "
+                f"INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ma_vi_tri, ngay_vao_lam, trang_thai) "
                 f"VALUES ({bid}, '{code}', '{esc(nm)}', '{gt}', '09{random.randint(10000000,99999999)}', "
-                f"'{email_from(nm, 'toanha.vn')}', '{kv}', '2025-06-01', 'DANG_LAM');")
+                f"'{email_from(nm, 'toanha.vn')}', '{kv}', {vitri}, '2025-06-01', 'DANG_LAM');")
         # phan cap quan ly: manager quan ly nhung nguoi con lai
         for bid in bql_ids:
             if bid != manager:
@@ -187,7 +189,7 @@ def gen():
                     f"VALUES ({bid}, {manager}, '2025-06-01');")
         lines.append("")
 
-        out = os.path.join(HERE, cfg["file"])
+        out = os.path.join(SQL_DIR, cfg["file"])
         open(out, "w", encoding="utf-8").write("\n".join(lines) + "\n")
         print("Da sinh", cfg["file"], f"({n_vp} VP)")
 

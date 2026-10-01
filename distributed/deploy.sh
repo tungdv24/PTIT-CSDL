@@ -15,21 +15,24 @@ run() {  # run <container> <sqlfile>
   docker exec -i "$1" mysql --default-character-set=utf8mb4 -uroot -p"$PW" < "$2" 2>&1 | grep -v "Using a password" || true
 }
 
-echo "===== SCHEMA (ca 3 node) ====="
+echo "===== 00 SCHEMA (ca 3 node) ====="
 for c in dist_hanoi dist_danang dist_hcm; do run "$c" "$SQL/00_schema.sql"; done
 
-echo "===== DANH MUC CHUNG (nhan ban ca 3 node) ====="
+echo "===== 01 DANH MUC CHUNG (nhan ban ca 3 node) ====="
 for c in dist_hanoi dist_danang dist_hcm; do run "$c" "$SQL/01_seed_catalog.sql"; done
 
-echo "===== DU LIEU PHAN MANH THEO KHU VUC ====="
-run dist_hanoi  "$SQL/seed_hanoi.sql"
-run dist_danang "$SQL/seed_danang.sql"
-run dist_hcm    "$SQL/seed_hcm.sql"
+echo "===== 02 DU LIEU PHAN MANH THEO KHU VUC ====="
+run dist_hanoi  "$SQL/02_seed_hanoi.sql"
+run dist_danang "$SQL/02_seed_danang.sql"
+run dist_hcm    "$SQL/02_seed_hcm.sql"
 
-echo "===== FEDERATED + VIEW (chi tai HN) ====="
-run dist_hanoi  "$SQL/federated_hanoi.sql"
+echo "===== 03 FEDERATED + VIEW (chi tai HN) ====="
+run dist_hanoi  "$SQL/03_federated_hanoi.sql"
 
-echo "===== TRIGGER RANG BUOC NGHIEP VU (ca 3 node) ====="
-for c in dist_hanoi dist_danang dist_hcm; do run "$c" "$SQL/triggers.sql"; done
+echo "===== 04 TRIGGER RANG BUOC NGHIEP VU (ca 3 node) ====="
+for c in dist_hanoi dist_danang dist_hcm; do run "$c" "$SQL/04_triggers.sql"; done
+
+echo "===== 05 STORED PROCEDURE / TRANSACTION (ca 3 node) ====="
+for c in dist_hanoi dist_danang dist_hcm; do run "$c" "$SQL/05_procedures.sql"; done
 
 echo "===== XONG ====="

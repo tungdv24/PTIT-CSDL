@@ -81,3 +81,61 @@ chi nhánh thêm cùng lúc sẽ bị xếp hàng, người sau thấy mã đã 
 - Ca 3: khóa phân tán (`GET_LOCK` tại HN) + kiểm tra chéo 3 node đảm bảo mã công
   ty duy nhất toàn hệ thống, chống cả race condition khi 2 chi nhánh thao tác đồng thời.
 - Mọi lỗi trùng mã được dịch sang thông báo tiếng Việt thân thiện trên giao diện.
+
+
+---
+
+# PHẦN 2: STORED PROCEDURE (TRANSACTION TRONG SQL)
+
+Ngoài các transaction ở tầng ứng dụng (phần 1), hệ thống còn có 5 stored
+procedure viết bằng **MySQL** đặt trong `distributed/sql/05_procedures.sql`,
+nạp trên **cả 3 node** (HN/DN/HCM). Đây là các **giao dịch cục bộ** (local
+transaction) — mỗi procedure chỉ thao tác dữ liệu của chi nhánh đang đăng nhập,
+không đọc/ghi chéo node, nên an toàn cho hệ phân tán (không cần two-phase commit).
+
+Mỗi procedure dùng transaction tường minh: `START TRANSACTION; ...; COMMIT;` kèm
+`DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;` — bất kỳ
+lỗi nào (kể cả do trigger `SIGNAL`) đều cuộn lại toàn bộ và báo lỗi ra ngoài.
+
+## Danh sách procedure
+
+| # | Procedure | Chức năng | Điểm kỹ thuật |
+|---|-----------|-----------|---------------|
+| TX1 | `sp_ThayDoiNguoiQuanLy(nv, ql_moi, ngay)` | Đổi người quản lý của NV tòa nhà, lưu lịch sử | Đóng quan hệ cũ (`ngay_ket_thuc`) + mở quan hệ mới trong 1 transaction; tương thích trigger `trg_quanly_no_self` |
+| TX2 | `sp_ThueVanPhong(hd, vp, don_gia, tu, den)` | Thêm văn phòng vào hợp đồng | Trigger `trg_cthd_no_overlap` tự chặn thuê trùng thời gian |
+| TX3 | `sp_TinhTienDichVuBacThang(cty, don_gia, ngay_dung, ngay_thang, OUT tien)` | Tính tiền dịch vụ bậc thang theo quy mô công ty | Lấy số NV + diện tích thuê thực tế; +5% mỗi mốc; trả qua tham số `OUT` |
+| TX4 | `sp_ChotLuongThang(thang, nam)` | Chốt lương NV tòa nhà theo vị trí + hoa hồng dịch vụ | Dùng `CURSOR` duyệt NV; `INSERT ... ON DUPLICATE KEY UPDATE` để chạy lại an toàn |
+| TX5 | `sp_ChotHoaDonThang(cty, thang, nam)` | Chốt hóa đơn tháng cho công ty | Tự sinh `so_hoa_don`; kiểm tra chống tạo trùng tháng |
+
+## Khác biệt so với bản Oracle (đề xuất ban đầu)
+Đề xuất ban đầu viết bằng **Oracle PL/SQL** nên không chạy trên MySQL. Đã chuyển đổi:
+- `CREATE OR REPLACE PROCEDURE ... IS/AS` → `CREATE PROCEDURE ... BEGIN` + `DELIMITER $$`
+- `IN/OUT NUMBER` → `IN/OUT INT/DECIMAL`; `NVL` → `IFNULL`; `TRUNC` → `FLOOR`
+- `EXTRACT(MONTH FROM ..)` → `MONTH()`; `SYSTIMESTAMP` → mặc định cột; bỏ `DBMS_OUTPUT`
+- Bỏ tự cấp khóa `MAX(..)+1` (các bảng đã `AUTO_INCREMENT`)
+- Sửa tham chiếu cột không tồn tại: `CONG_TY.so_luong_nhan_vien/tong_dien_tich`
+  → tính từ `COUNT(NVCT)` và `SUM(VAN_PHONG.dien_tich)`; `ma_dich_vu_phu_trach`
+  → dùng bảng `PHAN_CONG_CONG_VIEC`
+- TX4 ghi kết quả vào `LUONG_NHAN_VIEN` (thay vì chỉ in ra màn hình)
+
+## Kết quả kiểm thử (thực tế trên node HN)
+
+| TX | Kịch bản | Kết quả |
+|----|----------|---------|
+| TX5 | Chốt hóa đơn CT-01 tháng 10 (mới) | ✅ Tạo `INV-202610-CT01`, tiền thuê 50.000.000 |
+| TX5 | Chốt lại cùng tháng | ✅ Lỗi "Hoa don...da ton tai" + **ROLLBACK** (không nhân đôi) |
+| TX1 | Đổi QL của NV id=1 sang id=2 | ✅ Quan hệ cũ đóng ngày 30/09, quan hệ mới mở 01/10 |
+| TX1 | NV id=3 tự quản lý chính mình | ✅ Trigger chặn + **ROLLBACK** (quan hệ cũ còn nguyên — chứng minh tính nguyên tử) |
+| TX2 | Thuê VP-07 cho HĐ-01 | ✅ Thêm được |
+| TX2 | Thuê lại VP-07 trùng thời gian | ✅ Trigger `trg_cthd_no_overlap` chặn + **ROLLBACK** |
+| TX3 | CT-01 (5 NV, 200 m²), đơn giá gốc 1.000.000 | ✅ = 1.000.000 × (1 + 50%) = **1.500.000** (diện tích 200 > 100 → +50%) |
+| TX4 | Chốt lương tháng 11 | ✅ Ghi `LUONG_NHAN_VIEN` đúng lương theo vị trí (QL 20tr, Trưởng ca 12tr...) |
+
+## Cách gọi
+```sql
+CALL sp_ChotHoaDonThang(1, 10, 2026);
+CALL sp_ThayDoiNguoiQuanLy(1, 2, '2026-10-01');
+CALL sp_ThueVanPhong(1, 7, 300000, '2026-10-01', '2026-12-31');
+CALL sp_TinhTienDichVuBacThang(1, 1000000, 30, 30, @tien); SELECT @tien;
+CALL sp_ChotLuongThang(11, 2026);
+```

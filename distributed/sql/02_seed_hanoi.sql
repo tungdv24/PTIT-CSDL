@@ -76,11 +76,11 @@ INSERT INTO DANG_KY_DICH_VU (ma_dang_ky, ma_cong_ty, ma_dich_vu, ngay_bat_dau, d
 INSERT INTO DANG_KY_DICH_VU (ma_dang_ky, ma_cong_ty, ma_dich_vu, ngay_bat_dau, don_gia, trang_thai) VALUES (11, 4, 3, '2026-01-01', 2000000, 'DANG_DUNG');
 
 -- Nhan vien toa nha HN (quan ly: BQL-005)
-INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ngay_vao_lam, trang_thai) VALUES (1, 'BQL-001', 'Nguyễn Văn Khang', 'NAM', '0959558975', 'khangnv@toanha.vn', 'HN', '2025-06-01', 'DANG_LAM');
-INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ngay_vao_lam, trang_thai) VALUES (2, 'BQL-002', 'Trần Quốc Bảo', 'NU', '0998058380', 'baotq@toanha.vn', 'HN', '2025-06-01', 'DANG_LAM');
-INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ngay_vao_lam, trang_thai) VALUES (3, 'BQL-003', 'Lê Anh Khoa', 'NAM', '0918579874', 'khoala@toanha.vn', 'HN', '2025-06-01', 'DANG_LAM');
-INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ngay_vao_lam, trang_thai) VALUES (4, 'BQL-004', 'Phạm Thành Long', 'NU', '0959140117', 'longpt@toanha.vn', 'HN', '2025-06-01', 'DANG_LAM');
-INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ngay_vao_lam, trang_thai) VALUES (5, 'BQL-005', 'Hoàng Minh Nhật', 'NAM', '0963207634', 'nhathm@toanha.vn', 'HN', '2025-06-01', 'DANG_LAM');
+INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ma_vi_tri, ngay_vao_lam, trang_thai) VALUES (1, 'BQL-001', 'Nguyễn Văn Khang', 'NAM', '0989585513', 'khangnv@toanha.vn', 'HN', 2, '2025-06-01', 'DANG_LAM');
+INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ma_vi_tri, ngay_vao_lam, trang_thai) VALUES (2, 'BQL-002', 'Trần Quốc Bảo', 'NU', '0959558975', 'baotq@toanha.vn', 'HN', 3, '2025-06-01', 'DANG_LAM');
+INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ma_vi_tri, ngay_vao_lam, trang_thai) VALUES (3, 'BQL-003', 'Lê Anh Khoa', 'NU', '0913106486', 'khoala@toanha.vn', 'HN', 4, '2025-06-01', 'DANG_LAM');
+INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ma_vi_tri, ngay_vao_lam, trang_thai) VALUES (4, 'BQL-004', 'Phạm Thành Long', 'NAM', '0944690993', 'longpt@toanha.vn', 'HN', 5, '2025-06-01', 'DANG_LAM');
+INSERT INTO NHAN_VIEN_TOA_NHA (ma_nhan_vien_toa_nha, ma_so_nhan_vien, ho_ten, gioi_tinh, so_dien_thoai, email, khu_vuc, ma_vi_tri, ngay_vao_lam, trang_thai) VALUES (5, 'BQL-005', 'Hoàng Minh Nhật', 'NAM', '0973145583', 'nhathm@toanha.vn', 'HN', 1, '2025-06-01', 'DANG_LAM');
 INSERT INTO QUAN_LY_NHAN_VIEN (ma_nhan_vien, ma_nguoi_quan_ly, ngay_bat_dau) VALUES (1, 5, '2025-06-01');
 INSERT INTO QUAN_LY_NHAN_VIEN (ma_nhan_vien, ma_nguoi_quan_ly, ngay_bat_dau) VALUES (2, 5, '2025-06-01');
 INSERT INTO QUAN_LY_NHAN_VIEN (ma_nhan_vien, ma_nguoi_quan_ly, ngay_bat_dau) VALUES (3, 5, '2025-06-01');

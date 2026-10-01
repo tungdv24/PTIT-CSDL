@@ -27,13 +27,19 @@ def _retry(fn):
 
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
-        try:
-            return fn(*args, **kwargs)
-        except OperationalError as e:
-            code = e.orig.args[0] if getattr(e, "orig", None) and e.orig.args else None
-            if code in (1160, 2006, 2013):  # loi ket noi tam thoi
+        # Thu toi da 3 lan: FEDERATED co the giu nhieu ket noi cache chet
+        # (vd ngay sau khi tao lai bang FEDERATED) -> can retry vai lan.
+        last = None
+        for _ in range(3):
+            try:
                 return fn(*args, **kwargs)
-            raise
+            except OperationalError as e:
+                code = e.orig.args[0] if getattr(e, "orig", None) and e.orig.args else None
+                if code in (1160, 2006, 2013):  # loi ket noi tam thoi
+                    last = e
+                    continue
+                raise
+        raise last
 
     return wrapper
 
