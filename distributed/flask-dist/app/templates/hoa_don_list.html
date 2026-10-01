@@ -11,9 +11,9 @@
     </form>
     {% if current_user.is_admin %}
     <form method="post" action="{{ url_for('finance.hoa_don_chot') }}"
-          onsubmit="return confirm('Chốt hóa đơn tháng {{ thang }}/{{ nam }} cho tất cả công ty của chi nhánh? (gọi stored procedure sp_ChotHoaDonThang)');">
+          onsubmit="return confirm('Chốt / tính lại hóa đơn tháng {{ thang }}/{{ nam }} cho tất cả công ty của chi nhánh? (gọi stored procedure sp_ChotHoaDonThang)');">
       <input type="hidden" name="thang" value="{{ thang }}"><input type="hidden" name="nam" value="{{ nam }}">
-      <button class="btn">⚙ Chốt hóa đơn tháng {{ thang }}</button>
+      <button class="btn">⚙ Chốt / tính lại HĐ tháng {{ thang }}</button>
     </form>
     {% endif %}
   </div>

@@ -57,22 +57,18 @@ def hoa_don_thanh_toan(ma_hoa_don):
 def hoa_don_chot():
     """Chot hoa don thang cho TAT CA cong ty cua node (goi stored procedure TX5).
 
-    Goi sp_ChotHoaDonThang cho tung cong ty; procedure tu bo qua cong ty da co
-    hoa don thang do (SIGNAL -> ta bat va dem la 'da co').
+    sp_ChotHoaDonThang la UPSERT: neu da co hoa don thang do thi tinh lai + cap
+    nhat (vd sau khi them su dung dich vu), chua co thi tao moi -> bam bao nhieu
+    lan cung ra so dung, khong nhan doi.
     """
-    from sqlalchemy.exc import SQLAlchemyError
     thang = request.form.get("thang", type=int)
     nam = request.form.get("nam", type=int)
     cty_list = db.query_all("SELECT ma_cong_ty FROM CONG_TY WHERE trang_thai='DANG_THUE' ORDER BY ma_cong_ty")
-    tao, bo_qua = 0, 0
     for ct in cty_list:
-        try:
-            db.execute("CALL sp_ChotHoaDonThang(:c, :t, :n)",
-                       {"c": ct["ma_cong_ty"], "t": thang, "n": nam})
-            tao += 1
-        except SQLAlchemyError:
-            bo_qua += 1   # da co hoa don thang do -> procedure SIGNAL, bo qua
-    flash(f"Chot hoa don thang {thang}/{nam}: tao moi {tao}, bo qua (da co) {bo_qua}.", "success")
+        # Procedure upsert: tao moi hoac tinh lai neu da co -> bam bao nhieu lan cung dung.
+        db.execute("CALL sp_ChotHoaDonThang(:c, :t, :n)",
+                   {"c": ct["ma_cong_ty"], "t": thang, "n": nam})
+    flash(f"Da chot/tinh lai hoa don thang {thang}/{nam} cho {len(cty_list)} cong ty.", "success")
     return redirect(url_for("finance.hoa_don_list", thang=thang, nam=nam))
 
 

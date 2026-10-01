@@ -232,7 +232,6 @@ BEGIN
     DECLARE v_dv_theo_luot DECIMAL(15,2) DEFAULT 0; -- DV theo luot (su dung thuc te)
     DECLARE v_tien_dv DECIMAL(15,2) DEFAULT 0;
     DECLARE v_he_so DECIMAL(10,4) DEFAULT 1;
-    DECLARE v_da_co INT DEFAULT 0;
     DECLARE v_so_hd VARCHAR(100);
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -242,14 +241,6 @@ BEGIN
     END;
 
     START TRANSACTION;
-        -- Chong tao trung hoa don cung cong ty + thang + nam
-        SELECT COUNT(*) INTO v_da_co
-        FROM HOA_DON WHERE ma_cong_ty = p_ma_cong_ty AND thang = p_thang AND nam = p_nam;
-        IF v_da_co > 0 THEN
-            SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Hoa don cua cong ty nay trong thang da ton tai';
-        END IF;
-
         -- 1) Tien thue van phong (hop dong hieu luc)
         SELECT IFNULL(SUM(vp.dien_tich * cthd.don_gia_thue_m2), 0) INTO v_tien_thue
         FROM HOP_DONG_THUE hd
@@ -284,10 +275,18 @@ BEGIN
         SET v_tien_dv = v_dv_co_dinh + v_dv_theo_luot;
         SET v_so_hd = CONCAT('INV-', p_nam, LPAD(p_thang,2,'0'), '-CT', LPAD(p_ma_cong_ty,2,'0'));
 
+        -- UPSERT: neu da co hoa don thang do (trung so_hoa_don UNIQUE) -> TINH LAI
+        -- va cap nhat; neu chua co -> tao moi. Nho vay "chot lai" luon ra so dung
+        -- voi du lieu hien tai (vd sau khi them su dung dich vu), khong nhan doi.
+        -- Giu nguyen trang_thai_thanh_toan neu da thanh toan (khong ghi de).
         INSERT INTO HOA_DON
             (so_hoa_don, ma_cong_ty, thang, nam, tien_thue_van_phong, tien_dich_vu, tong_tien, trang_thai_thanh_toan)
         VALUES
-            (v_so_hd, p_ma_cong_ty, p_thang, p_nam, v_tien_thue, v_tien_dv, v_tien_thue + v_tien_dv, 'CHUA_THANH_TOAN');
+            (v_so_hd, p_ma_cong_ty, p_thang, p_nam, v_tien_thue, v_tien_dv, v_tien_thue + v_tien_dv, 'CHUA_THANH_TOAN')
+        ON DUPLICATE KEY UPDATE
+            tien_thue_van_phong = VALUES(tien_thue_van_phong),
+            tien_dich_vu        = VALUES(tien_dich_vu),
+            tong_tien           = VALUES(tong_tien);
     COMMIT;
 END$$
 DELIMITER ;

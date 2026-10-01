@@ -62,10 +62,16 @@ printf "CALL sp_ChotHoaDonThang(%s, 12, 2026);" "$CTY" | runsql_err >/dev/null
 CNT=$(printf "SELECT COUNT(*) FROM HOA_DON WHERE ma_cong_ty=%s AND thang=12 AND nam=2026;" "$CTY" | runsql)
 [ "$CNT" = "1" ] && pass "Tao hoa don thang 12 thanh cong (COMMIT)" || fail "Khong tao duoc hoa don"
 
-echo "[TX5] Chot LAI thang 12 (trung) -> phai ROLLBACK + bao loi"
-expect_error "$(printf 'CALL sp_ChotHoaDonThang(%s, 12, 2026);' "$CTY")" "Chot hoa don trung" "da ton tai"
+echo "[TX5] Chot LAI thang 12 (UPSERT) -> cap nhat, KHONG nhan doi, giu ma_hoa_don"
+HDID1=$(printf "SELECT ma_hoa_don FROM HOA_DON WHERE ma_cong_ty=%s AND thang=12 AND nam=2026;" "$CTY" | runsql)
+printf "CALL sp_ChotHoaDonThang(%s, 12, 2026);" "$CTY" | runsql_err >/dev/null
 CNT=$(printf "SELECT COUNT(*) FROM HOA_DON WHERE ma_cong_ty=%s AND thang=12 AND nam=2026;" "$CTY" | runsql)
-[ "$CNT" = "1" ] && pass "Hoa don khong bi nhan doi (van 1 dong)" || fail "Bi nhan doi: $CNT dong"
+HDID2=$(printf "SELECT ma_hoa_don FROM HOA_DON WHERE ma_cong_ty=%s AND thang=12 AND nam=2026;" "$CTY" | runsql)
+if [ "$CNT" = "1" ] && [ "$HDID1" = "$HDID2" ]; then
+  pass "Chot lai (upsert): van 1 dong, giu nguyen ma_hoa_don=$HDID2 (khong nhan doi)"
+else
+  fail "Upsert sai: so dong=$CNT, ma_hoa_don truoc=$HDID1 sau=$HDID2"
+fi
 
 echo
 echo "[TX2] sp_ThueVanPhong - thue VP trong cho hop dong"
