@@ -15,6 +15,44 @@
 USE QuanLyToaNha;
 
 -- ---------------------------------------------------------------------
+-- HAM DUNG CHUNG: he so bac thang theo QUY MO cong ty
+--   +5% moi 5 nhan vien vuot nguong 10
+--   +5% moi 10 m2 dien tich thue vuot nguong 100
+-- Dung boi ca TX3 (uoc tinh 1 dich vu) va TX5 (chot hoa don) -> KHONG lap logic.
+-- ---------------------------------------------------------------------
+DROP FUNCTION IF EXISTS fn_he_so_bac_thang;
+DELIMITER $$
+CREATE FUNCTION fn_he_so_bac_thang(p_ma_cong_ty INT)
+RETURNS DECIMAL(10,4)
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE v_so_nv INT DEFAULT 0;
+    DECLARE v_dien_tich DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_ty_le DECIMAL(10,4) DEFAULT 0;
+
+    SELECT COUNT(*) INTO v_so_nv
+    FROM NHAN_VIEN_CONG_TY
+    WHERE ma_cong_ty = p_ma_cong_ty AND trang_thai = 'HOAT_DONG';
+
+    SELECT IFNULL(SUM(vp.dien_tich), 0) INTO v_dien_tich
+    FROM CHI_TIET_HOP_DONG cthd
+    JOIN HOP_DONG_THUE hd ON hd.ma_hop_dong = cthd.ma_hop_dong
+    JOIN VAN_PHONG vp ON vp.ma_van_phong = cthd.ma_van_phong
+    WHERE hd.ma_cong_ty = p_ma_cong_ty AND hd.trang_thai = 'HIEU_LUC';
+
+    IF v_so_nv > 10 THEN
+        SET v_ty_le = v_ty_le + (FLOOR((v_so_nv - 10) / 5) * 0.05);
+    END IF;
+    IF v_dien_tich > 100 THEN
+        SET v_ty_le = v_ty_le + (FLOOR((v_dien_tich - 100) / 10) * 0.05);
+    END IF;
+
+    RETURN 1 + v_ty_le;   -- he so nhan (vd 1.50 = +50%)
+END$$
+DELIMITER ;
+
+-- ---------------------------------------------------------------------
 -- TX1: Thay doi nguoi quan ly cua mot nhan vien toa nha (luu lich su)
 --   - Ket thuc quan he quan ly hien tai (ngay_ket_thuc = ngay_thay_doi - 1)
 --   - Mo quan he quan ly moi (ngay_ket_thuc = NULL)
@@ -79,11 +117,9 @@ END$$
 DELIMITER ;
 
 -- ---------------------------------------------------------------------
--- TX3: Tinh tien dich vu bac thang theo QUY MO cong ty (so NV & dien tich thue)
---   - so_nhan_vien = COUNT nhan vien cong ty dang hoat dong
---   - dien_tich    = SUM dien tich cac van phong dang thue (hop dong HIEU_LUC)
---   - ty_le_tang   += 5% moi 5 NV vuot nguong 10; += 5% moi 10 m2 vuot nguong 100
---   Tra ket qua qua tham so OUT (chi tinh toan, khong ghi DB).
+-- TX3: Uoc tinh tien MOT dich vu co dinh (bac thang) cho cong ty, theo so ngay
+--   dung trong thang. Dung ham fn_he_so_bac_thang (dung chung voi TX5).
+--   Chi tinh toan, tra qua OUT (khong ghi DB) -> dung de tra cuu/bao gia.
 -- ---------------------------------------------------------------------
 DROP PROCEDURE IF EXISTS sp_TinhTienDichVuBacThang;
 DELIMITER $$
@@ -95,28 +131,7 @@ CREATE PROCEDURE sp_TinhTienDichVuBacThang(
     OUT p_thanh_tien DECIMAL(15,2)
 )
 BEGIN
-    DECLARE v_so_nhan_vien INT DEFAULT 0;
-    DECLARE v_dien_tich DECIMAL(15,2) DEFAULT 0;
-    DECLARE v_ty_le_tang DECIMAL(10,4) DEFAULT 0;
-
-    SELECT COUNT(*) INTO v_so_nhan_vien
-    FROM NHAN_VIEN_CONG_TY
-    WHERE ma_cong_ty = p_ma_cong_ty AND trang_thai = 'HOAT_DONG';
-
-    SELECT IFNULL(SUM(vp.dien_tich), 0) INTO v_dien_tich
-    FROM CHI_TIET_HOP_DONG cthd
-    JOIN HOP_DONG_THUE hd ON hd.ma_hop_dong = cthd.ma_hop_dong
-    JOIN VAN_PHONG vp ON vp.ma_van_phong = cthd.ma_van_phong
-    WHERE hd.ma_cong_ty = p_ma_cong_ty AND hd.trang_thai = 'HIEU_LUC';
-
-    IF v_so_nhan_vien > 10 THEN
-        SET v_ty_le_tang = v_ty_le_tang + (FLOOR((v_so_nhan_vien - 10) / 5) * 0.05);
-    END IF;
-    IF v_dien_tich > 100 THEN
-        SET v_ty_le_tang = v_ty_le_tang + (FLOOR((v_dien_tich - 100) / 10) * 0.05);
-    END IF;
-
-    SET p_thanh_tien = (p_don_gia_goc * (1 + v_ty_le_tang))
+    SET p_thanh_tien = (p_don_gia_goc * fn_he_so_bac_thang(p_ma_cong_ty))
                        * (p_so_ngay_su_dung / p_so_ngay_trong_thang);
 END$$
 DELIMITER ;
@@ -195,8 +210,12 @@ DELIMITER ;
 
 -- ---------------------------------------------------------------------
 -- TX5: Chot hoa don thang cho mot cong ty (tien thue VP + tien dich vu)
+--   tien_dich_vu = DV CO DINH (don gia dang ky * he so bac thang - dung chung
+--                  ham voi TX3) + DV THEO LUOT (su dung thuc te SU_DUNG_DICH_VU).
+--   Phan loai qua DICH_VU.cach_tinh_phi:
+--     THEO_DIEN_TICH / THEO_DAU_NGUOI / TRON_GOI -> co dinh (bac thang)
+--     THEO_LUOT                                   -> theo luot su dung
 --   - tien_thue = SUM(dien_tich * don_gia_thue_m2) cua hop dong HIEU_LUC
---   - tien_dich_vu = SUM thanh_tien SU_DUNG_DICH_VU cua NV thuoc cong ty trong thang
 --   - so_hoa_don tu sinh (NOT NULL UNIQUE); neu da co hoa don thang do -> bao loi.
 --   Toan bo trong 1 transaction.
 -- ---------------------------------------------------------------------
@@ -209,7 +228,10 @@ CREATE PROCEDURE sp_ChotHoaDonThang(
 )
 BEGIN
     DECLARE v_tien_thue DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_dv_co_dinh DECIMAL(15,2) DEFAULT 0;   -- DV co dinh (bac thang theo quy mo)
+    DECLARE v_dv_theo_luot DECIMAL(15,2) DEFAULT 0; -- DV theo luot (su dung thuc te)
     DECLARE v_tien_dv DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_he_so DECIMAL(10,4) DEFAULT 1;
     DECLARE v_da_co INT DEFAULT 0;
     DECLARE v_so_hd VARCHAR(100);
 
@@ -235,14 +257,31 @@ BEGIN
         JOIN VAN_PHONG vp ON vp.ma_van_phong = cthd.ma_van_phong
         WHERE hd.ma_cong_ty = p_ma_cong_ty AND hd.trang_thai = 'HIEU_LUC';
 
-        -- 2) Tien dich vu theo su dung thuc te trong thang
-        SELECT IFNULL(SUM(sd.thanh_tien), 0) INTO v_tien_dv
+        -- He so bac thang theo quy mo cong ty (dung chung ham voi TX3)
+        SET v_he_so = fn_he_so_bac_thang(p_ma_cong_ty);
+
+        -- 2a) Tien dich vu CO DINH: don gia dang ky * he so bac thang,
+        --     chi cac dich vu tinh phi co dinh (khong phai THEO_LUOT), dang dung.
+        SELECT IFNULL(SUM(dk.don_gia * v_he_so), 0) INTO v_dv_co_dinh
+        FROM DANG_KY_DICH_VU dk
+        JOIN DICH_VU dv ON dv.ma_dich_vu = dk.ma_dich_vu
+        WHERE dk.ma_cong_ty = p_ma_cong_ty
+          AND dk.trang_thai = 'DANG_DUNG'
+          AND dv.cach_tinh_phi IN ('THEO_DIEN_TICH', 'THEO_DAU_NGUOI', 'TRON_GOI');
+
+        -- 2b) Tien dich vu THEO LUOT: tong theo su dung thuc te trong thang
+        --     (chi dich vu co cach_tinh_phi = THEO_LUOT)
+        SELECT IFNULL(SUM(sd.thanh_tien), 0) INTO v_dv_theo_luot
         FROM SU_DUNG_DICH_VU sd
         JOIN NHAN_VIEN_CONG_TY nv ON nv.ma_nhan_vien = sd.ma_nhan_vien
+        JOIN DANG_KY_DICH_VU dk ON dk.ma_dang_ky = sd.ma_dang_ky
+        JOIN DICH_VU dv ON dv.ma_dich_vu = dk.ma_dich_vu
         WHERE nv.ma_cong_ty = p_ma_cong_ty
+          AND dv.cach_tinh_phi = 'THEO_LUOT'
           AND MONTH(sd.ngay_su_dung) = p_thang
           AND YEAR(sd.ngay_su_dung)  = p_nam;
 
+        SET v_tien_dv = v_dv_co_dinh + v_dv_theo_luot;
         SET v_so_hd = CONCAT('INV-', p_nam, LPAD(p_thang,2,'0'), '-CT', LPAD(p_ma_cong_ty,2,'0'));
 
         INSERT INTO HOA_DON

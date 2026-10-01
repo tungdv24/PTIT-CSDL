@@ -107,6 +107,20 @@ lỗi nào (kể cả do trigger `SIGNAL`) đều cuộn lại toàn bộ và b�
 | TX4 | `sp_ChotLuongThang(thang, nam)` | Chốt lương NV tòa nhà theo vị trí + hoa hồng dịch vụ | Dùng `CURSOR` duyệt NV; `INSERT ... ON DUPLICATE KEY UPDATE` để chạy lại an toàn |
 | TX5 | `sp_ChotHoaDonThang(cty, thang, nam)` | Chốt hóa đơn tháng cho công ty | Tự sinh `so_hoa_don`; kiểm tra chống tạo trùng tháng |
 
+## Quan hệ TX3 ↔ TX5 (phí dịch vụ)
+Phí dịch vụ chia 2 loại theo `DICH_VU.cach_tinh_phi`:
+- **Cố định** (THEO_DIEN_TICH / THEO_DAU_NGUOI / TRON_GOI): tính theo quy mô công
+  ty, áp **hệ số bậc thang** (+5% mỗi 5 NV vượt 10; +5% mỗi 10 m² vượt 100).
+- **Theo lượt** (THEO_LUOT, vd ăn uống/gửi xe): tính theo `SU_DUNG_DICH_VU`.
+
+Để không trùng/rời rạc logic, tách hàm dùng chung `fn_he_so_bac_thang(ma_cong_ty)`:
+- **TX3** dùng hàm này để *ước tính* 1 dịch vụ cố định (trả OUT, không ghi DB).
+- **TX5** dùng cùng hàm để tính phí cố định, rồi **cộng** với phí theo lượt vào
+  `tien_dich_vu` của hóa đơn. Nhờ vậy hóa đơn gồm đủ: tiền thuê + DV cố định + DV theo lượt.
+
+Ví dụ CT-01 (diện tích 200 m² → hệ số 1.5): DV cố định đăng ký 2.025.000 ×
+1.5 = 3.037.500; tiền thuê 50.000.000 → tổng hóa đơn 53.037.500.
+
 ## Khác biệt so với bản Oracle (đề xuất ban đầu)
 Đề xuất ban đầu viết bằng **Oracle PL/SQL** nên không chạy trên MySQL. Đã chuyển đổi:
 - `CREATE OR REPLACE PROCEDURE ... IS/AS` → `CREATE PROCEDURE ... BEGIN` + `DELIMITER $$`
