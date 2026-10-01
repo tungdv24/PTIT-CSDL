@@ -86,3 +86,11 @@ INSERT INTO QUAN_LY_NHAN_VIEN (ma_nhan_vien, ma_nguoi_quan_ly, ngay_bat_dau) VAL
 INSERT INTO QUAN_LY_NHAN_VIEN (ma_nhan_vien, ma_nguoi_quan_ly, ngay_bat_dau) VALUES (3, 5, '2025-06-01');
 INSERT INTO QUAN_LY_NHAN_VIEN (ma_nhan_vien, ma_nguoi_quan_ly, ngay_bat_dau) VALUES (4, 5, '2025-06-01');
 
+
+-- Chi phi van hanh toa nha (phan manh HN)
+INSERT INTO CHI_PHI_TOA_NHA (ma_loai_chi_phi, noi_dung, ngay_phat_sinh, so_tien, khu_vuc, ghi_chu) VALUES
+(1, 'Tiền điện khu vực chung tháng 8', '2026-08-31', 25000000, 'HN', 'Thang may + hanh lang'),
+(2, 'Tiền nước sinh hoạt chung tháng 8', '2026-08-31', 8000000, 'HN', NULL),
+(3, 'Bảo trì thang máy định kỳ', '2026-08-20', 12000000, 'HN', 'Quy 3'),
+(1, 'Tiền điện khu vực chung tháng 9', '2026-09-30', 26500000, 'HN', NULL),
+(2, 'Tiền nước sinh hoạt chung tháng 9', '2026-09-30', 8500000, 'HN', NULL);

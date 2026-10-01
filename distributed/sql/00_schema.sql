@@ -74,6 +74,20 @@ CREATE TABLE IF NOT EXISTS VAN_PHONG (
     trang_thai VARCHAR(20) DEFAULT 'TRONG'
 );
 
+-- CHI PHI VAN HANH TOA NHA (dien/nuoc/bao tri...) - PHAN MANH theo khu vuc.
+-- ma_loai_chi_phi tro toi danh muc LOAI_CHI_PHI (nhan ban giong nhau o 3 node).
+CREATE TABLE IF NOT EXISTS CHI_PHI_TOA_NHA (
+    ma_chi_phi INT AUTO_INCREMENT PRIMARY KEY,
+    ma_loai_chi_phi INT NOT NULL,
+    noi_dung VARCHAR(255) NOT NULL,
+    ngay_phat_sinh DATE NOT NULL,
+    so_tien DECIMAL(15,2) NOT NULL,
+    khu_vuc VARCHAR(10) NOT NULL DEFAULT 'HN',   -- HN / DN / HCM (thuoc tinh phan manh)
+    ghi_chu VARCHAR(255),
+    ngay_tao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_chiphi_loai FOREIGN KEY (ma_loai_chi_phi) REFERENCES LOAI_CHI_PHI(ma_loai_chi_phi)
+);
+
 CREATE TABLE IF NOT EXISTS NHAN_VIEN_CONG_TY (
     ma_nhan_vien INT AUTO_INCREMENT PRIMARY KEY,
     ma_so_nhan_vien VARCHAR(50) NOT NULL UNIQUE,

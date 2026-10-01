@@ -189,6 +189,18 @@ def gen():
                     f"VALUES ({bid}, {manager}, '2025-06-01');")
         lines.append("")
 
+        # ---- Chi phi van hanh toa nha (phan manh theo khu vuc) ----
+        lines.append(f"-- Chi phi van hanh toa nha (phan manh {kv})")
+        lines.append(
+            "INSERT INTO CHI_PHI_TOA_NHA (ma_loai_chi_phi, noi_dung, ngay_phat_sinh, so_tien, khu_vuc, ghi_chu) VALUES")
+        lines.append(
+            f"(1, 'Tien dien khu vuc chung thang 8', '2026-08-31', 25000000, '{kv}', 'Thang may + hanh lang'),")
+        lines.append(f"(2, 'Tien nuoc sinh hoat chung thang 8', '2026-08-31', 8000000, '{kv}', NULL),")
+        lines.append(f"(3, 'Bao tri thang may dinh ky', '2026-08-20', 12000000, '{kv}', 'Quy 3'),")
+        lines.append(f"(1, 'Tien dien khu vuc chung thang 9', '2026-09-30', 26500000, '{kv}', NULL),")
+        lines.append(f"(2, 'Tien nuoc sinh hoat chung thang 9', '2026-09-30', 8500000, '{kv}', NULL);")
+        lines.append("")
+
         out = os.path.join(SQL_DIR, cfg["file"])
         open(out, "w", encoding="utf-8").write("\n".join(lines) + "\n")
         print("Da sinh", cfg["file"], f"({n_vp} VP)")

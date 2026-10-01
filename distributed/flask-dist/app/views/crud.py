@@ -216,23 +216,27 @@ ENTITIES = {
         ],
     },
     "chi-phi": {
-        "table": "CHI_PHI_TOA_NHA", "pk": "ma_chi_phi", "title": "Chi phi toa nha",
-        "list_cols": [("ma_chi_phi", "Mã"), ("ma_loai_chi_phi", "Loại"), ("noi_dung", "Nội dung"),
-                      ("ngay_phat_sinh", "Ngày"), ("so_tien", "Số tiền")],
+        "table": "CHI_PHI_TOA_NHA", "pk": "ma_chi_phi", "title": "Chi phí tòa nhà",
+        "list_cols": [("ma_chi_phi", "Mã"), ("ten_loai_chi_phi", "Loại chi phí"), ("noi_dung", "Nội dung"),
+                      ("ngay_phat_sinh", "Ngày"), ("so_tien", "Số tiền"), ("khu_vuc", "Khu vực")],
+        # JOIN LOAI_CHI_PHI de hien ten loai thay vi id.
+        "list_sql": """SELECT cp.ma_chi_phi, lcp.ten_loai_chi_phi, cp.noi_dung,
+                              cp.ngay_phat_sinh, cp.so_tien, cp.khu_vuc
+                       FROM CHI_PHI_TOA_NHA cp
+                       JOIN LOAI_CHI_PHI lcp ON lcp.ma_loai_chi_phi = cp.ma_loai_chi_phi
+                       ORDER BY cp.ngay_phat_sinh DESC, cp.ma_chi_phi DESC""",
         "fields": [
-            F("ma_loai_chi_phi", "Loai chi phi", type="select", required=True,
+            F("ma_loai_chi_phi", "Loại chi phí", type="select", required=True,
               fk=("SELECT ma_loai_chi_phi, ten_loai_chi_phi FROM LOAI_CHI_PHI ORDER BY ten_loai_chi_phi",
                   "ma_loai_chi_phi", "ten_loai_chi_phi")),
-            F("noi_dung", "Noi dung", required=True),
-            F("ngay_phat_sinh", "Ngay phat sinh", type="date", required=True),
-            F("so_tien", "So tien", type="number", required=True),
-            F("ghi_chu", "Ghi chu", type="textarea"),
+            F("noi_dung", "Nội dung", required=True),
+            F("ngay_phat_sinh", "Ngày phát sinh", type="date", required=True),
+            F("so_tien", "Số tiền", type="number", required=True),
+            F("khu_vuc", "Khu vực", type="select", options=["HN", "DN", "HCM"], required=True),
+            F("ghi_chu", "Ghi chú", type="textarea"),
         ],
     },
 }
-
-# Bang CHI_PHI_TOA_NHA khong co trong schema phan tan toi gian -> loai neu chua tao.
-ENTITIES.pop("chi-phi", None)
 
 
 # ---------------------------------------------------------------------------
