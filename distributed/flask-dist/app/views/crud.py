@@ -6,11 +6,41 @@ nhanh DN thi moi thay/sua du lieu cua DN (vi node DN chi chua du lieu DN).
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from werkzeug.security import generate_password_hash
 
 from .. import db
 from ..config import Config
 
 _NODES = Config.NODES
+
+
+def _tao_tai_khoan(t, ten_dang_nhap, ho_ten, vai_tro, khu_vuc,
+                   ma_cong_ty=None, ma_nhan_vien_toa_nha=None, ma_nhan_vien=None):
+    """Tao tai khoan dang nhap trong NGUOI_DUNG (chay trong cung transaction `t`).
+
+    Quy uoc demo: mat khau = ten dang nhap (= ma CT-/BQL-/NVCT-). Nho vay them
+    cong ty/nhan vien moi la dang nhap duoc ngay, dong bo voi du lieu nghiep vu.
+    """
+    t.execute(
+        """INSERT INTO NGUOI_DUNG
+           (ten_dang_nhap, mat_khau_hash, ho_ten, vai_tro, khu_vuc, ma_cong_ty, ma_nhan_vien_toa_nha, ma_nhan_vien)
+           VALUES (:u,:h,:ht,:r,:kv,:c,:bql,:nvct)""",
+        {"u": ten_dang_nhap, "h": generate_password_hash(ten_dang_nhap), "ht": ho_ten,
+         "r": vai_tro, "kv": khu_vuc, "c": ma_cong_ty, "bql": ma_nhan_vien_toa_nha, "nvct": ma_nhan_vien},
+    )
+
+
+def _after_create_cong_ty(new_id, data, t=None):
+    """Them cong ty -> tao tai khoan CONG_TY (username = ma_so_cong_ty)."""
+    _tao_tai_khoan(t, data["ma_so_cong_ty"], f"Dai dien {data.get('ten_cong_ty','')}",
+                   "CONG_TY", data.get("khu_vuc") or db.current_khu_vuc(), ma_cong_ty=new_id)
+
+
+def _after_create_nvct(new_id, data, t=None):
+    """Them nhan vien cong ty -> tao tai khoan NVCT (username = ma_so_nhan_vien)."""
+    _tao_tai_khoan(t, data["ma_so_nhan_vien"], data.get("ho_ten", ""),
+                   "NVCT", db.current_khu_vuc(),
+                   ma_cong_ty=data.get("ma_cong_ty"), ma_nhan_vien=new_id)
 
 
 class DuplicateError(Exception):
@@ -40,10 +70,8 @@ def F(name, label, type="text", required=False, options=None, fk=None, prefix=No
 
 
 def _auto_gan_quan_ly(new_id, data, t=None):
-    """Sau khi them 1 nhan vien toa nha moi -> tu dong gan phan cap quan ly.
-
-    Chay TRONG CUNG transaction `t` (neu co) de dam bao nguyen tu: neu buoc gan
-    quan ly loi thi insert nhan vien cung bi rollback.
+    """Sau khi them 1 nhan vien toa nha moi -> (1) tao tai khoan BQL + (2) tu dong
+    gan phan cap quan ly. Tat ca chay TRONG CUNG transaction `t` -> nguyen tu.
 
     Mo hinh: moi chi nhanh (node) 1 quan ly, 2 tang phang.
     - Neu node DA co quan ly (co nguoi la ma_nguoi_quan_ly trong QUAN_LY_NHAN_VIEN)
@@ -53,6 +81,11 @@ def _auto_gan_quan_ly(new_id, data, t=None):
     """
     import datetime
     runner = t if t is not None else db
+    # (1) Tao tai khoan dang nhap BQL (username = ma_so_nhan_vien)
+    if t is not None:
+        _tao_tai_khoan(t, data["ma_so_nhan_vien"], data.get("ho_ten", ""),
+                       "BQL", data.get("khu_vuc") or db.current_khu_vuc(),
+                       ma_nhan_vien_toa_nha=new_id)
     # Tim quan ly hien tai cua node (quan he con hieu luc)
     ql = runner.query_one(
         """SELECT ma_nguoi_quan_ly FROM QUAN_LY_NHAN_VIEN
@@ -75,6 +108,7 @@ ENTITIES = {
         "table": "CONG_TY", "pk": "ma_cong_ty", "title": "Công ty",
         # ma_so_cong_ty phai DUY NHAT tren CA 3 node (khong chi cuc bo).
         "cross_node_unique": "ma_so_cong_ty",
+        "after_create": _after_create_cong_ty,   # tao luon tai khoan CONG_TY
         "list_cols": [("ma_cong_ty", "Mã"), ("ma_so_cong_ty", "Mã CT"), ("ten_cong_ty", "Tên"),
                       ("khu_vuc", "Khu vực"), ("so_dien_thoai", "SĐT"), ("trang_thai", "Trạng thái")],
         "fields": [
@@ -135,6 +169,7 @@ ENTITIES = {
         "table": "NHAN_VIEN_CONG_TY", "pk": "ma_nhan_vien", "title": "Nhân viên công ty",
         # ma_so_nhan_vien phai DUY NHAT tren CA 3 node (khong chi cuc bo).
         "cross_node_unique": "ma_so_nhan_vien",
+        "after_create": _after_create_nvct,   # tao luon tai khoan NVCT
         "list_cols": [("ma_nhan_vien", "Mã"), ("ma_so_nhan_vien", "Mã NV"), ("ho_ten", "Họ tên"),
                       ("ten_cong_ty", "Công ty"), ("chuc_vu", "Chức vụ"), ("trang_thai", "Trạng thái")],
         "list_sql": """SELECT nv.ma_nhan_vien, nv.ma_so_nhan_vien, nv.ho_ten,
