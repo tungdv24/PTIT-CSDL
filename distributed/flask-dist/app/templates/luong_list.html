@@ -3,11 +3,20 @@
 {% block content %}
 <div class="page-head">
   <h1>{% if is_self %}Lương của tôi{% else %}Lương nhân viên tòa nhà{% endif %}</h1>
-  <form class="toolbar" method="get">
-    <select name="thang">{% for m in range(1,13) %}<option value="{{ m }}" {{ 'selected' if m==thang }}>Tháng {{ m }}</option>{% endfor %}</select>
-    <select name="nam">{% for y in [2025,2026,2027] %}<option value="{{ y }}" {{ 'selected' if y==nam }}>{{ y }}</option>{% endfor %}</select>
-    <button class="btn secondary">Xem</button>
-  </form>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <form class="toolbar" method="get">
+      <select name="thang">{% for m in range(1,13) %}<option value="{{ m }}" {{ 'selected' if m==thang }}>Tháng {{ m }}</option>{% endfor %}</select>
+      <select name="nam">{% for y in [2025,2026,2027] %}<option value="{{ y }}" {{ 'selected' if y==nam }}>{{ y }}</option>{% endfor %}</select>
+      <button class="btn secondary">Xem</button>
+    </form>
+    {% if current_user.is_admin %}
+    <form method="post" action="{{ url_for('finance.luong_chot') }}"
+          onsubmit="return confirm('Chốt lương tháng {{ thang }}/{{ nam }} cho nhân viên tòa nhà của chi nhánh? (gọi stored procedure sp_ChotLuongThang)');">
+      <input type="hidden" name="thang" value="{{ thang }}"><input type="hidden" name="nam" value="{{ nam }}">
+      <button class="btn">⚙ Chốt lương tháng {{ thang }}</button>
+    </form>
+    {% endif %}
+  </div>
 </div>
 {% if is_self %}<div class="flash info">Bạn đang xem bảng lương của chính mình.</div>{% endif %}
 <div class="card" style="padding:0;overflow:hidden;">

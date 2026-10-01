@@ -52,6 +52,45 @@ def hoa_don_thanh_toan(ma_hoa_don):
     return redirect(url_for("finance.hoa_don_detail", ma_hoa_don=ma_hoa_don))
 
 
+@bp.route("/hoa-don/chot", methods=["POST"])
+@roles_required()  # ADMIN only
+def hoa_don_chot():
+    """Chot hoa don thang cho TAT CA cong ty cua node (goi stored procedure TX5).
+
+    Goi sp_ChotHoaDonThang cho tung cong ty; procedure tu bo qua cong ty da co
+    hoa don thang do (SIGNAL -> ta bat va dem la 'da co').
+    """
+    from sqlalchemy.exc import SQLAlchemyError
+    thang = request.form.get("thang", type=int)
+    nam = request.form.get("nam", type=int)
+    cty_list = db.query_all("SELECT ma_cong_ty FROM CONG_TY WHERE trang_thai='DANG_THUE' ORDER BY ma_cong_ty")
+    tao, bo_qua = 0, 0
+    for ct in cty_list:
+        try:
+            db.execute("CALL sp_ChotHoaDonThang(:c, :t, :n)",
+                       {"c": ct["ma_cong_ty"], "t": thang, "n": nam})
+            tao += 1
+        except SQLAlchemyError:
+            bo_qua += 1   # da co hoa don thang do -> procedure SIGNAL, bo qua
+    flash(f"Chot hoa don thang {thang}/{nam}: tao moi {tao}, bo qua (da co) {bo_qua}.", "success")
+    return redirect(url_for("finance.hoa_don_list", thang=thang, nam=nam))
+
+
+@bp.route("/luong/chot", methods=["POST"])
+@roles_required()  # ADMIN only
+def luong_chot():
+    """Chot luong thang cho toan bo nhan vien toa nha cua node (stored procedure TX4)."""
+    from sqlalchemy.exc import SQLAlchemyError
+    thang = request.form.get("thang", type=int)
+    nam = request.form.get("nam", type=int)
+    try:
+        db.execute("CALL sp_ChotLuongThang(:t, :n)", {"t": thang, "n": nam})
+        flash(f"Da chot luong thang {thang}/{nam} cho nhan vien toa nha cua chi nhanh.", "success")
+    except SQLAlchemyError as e:
+        flash(f"Loi khi chot luong: {getattr(e, 'orig', e)}", "danger")
+    return redirect(url_for("finance.luong_list", thang=thang, nam=nam))
+
+
 # ---------------- Luong (BQL xem cua minh; ADMIN xem tat ca cua node) ----------------
 @bp.route("/luong")
 @roles_required("BQL")
