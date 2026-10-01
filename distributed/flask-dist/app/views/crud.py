@@ -30,11 +30,13 @@ def _friendly_error(e, cfg):
     return f"Lỗi: {orig if orig else e}"
 
 
-def F(name, label, type="text", required=False, options=None, fk=None, prefix=None):
+def F(name, label, type="text", required=False, options=None, fk=None, prefix=None, pad=None):
     # prefix: tien to co dinh cho ma (vd "CT-", "BQL-", "NVCT-"). Nguoi dung chi go
     # phan so; prefix duoc ghep tu dong khi luu, va tach ra khi hien thi de sua.
+    # pad: so chu so cua phan so (them so 0 o dau), vd pad=3 -> "20" thanh "020"
+    # cho dong nhat voi du lieu (BQL-020, NVCT-0020, CT-20...).
     return {"name": name, "label": label, "type": type, "required": required,
-            "options": options, "fk": fk, "prefix": prefix}
+            "options": options, "fk": fk, "prefix": prefix, "pad": pad}
 
 
 def _auto_gan_quan_ly(new_id, data, t=None):
@@ -76,7 +78,7 @@ ENTITIES = {
         "list_cols": [("ma_cong_ty", "Mã"), ("ma_so_cong_ty", "Mã CT"), ("ten_cong_ty", "Tên"),
                       ("khu_vuc", "Khu vực"), ("so_dien_thoai", "SĐT"), ("trang_thai", "Trạng thái")],
         "fields": [
-            F("ma_so_cong_ty", "Mã số công ty", required=True, prefix="CT-"),
+            F("ma_so_cong_ty", "Mã số công ty", required=True, prefix="CT-", pad=2),
             F("ma_so_thue", "Mã số thuế", required=True),
             F("ten_cong_ty", "Tên công ty", required=True),
             F("nguoi_dai_dien", "Người đại diện", required=True),
@@ -115,7 +117,7 @@ ENTITIES = {
                        LEFT JOIN VI_TRI_CONG_VIEC v ON v.ma_vi_tri = nv.ma_vi_tri
                        ORDER BY nv.ma_nhan_vien_toa_nha DESC""",
         "fields": [
-            F("ma_so_nhan_vien", "Mã số nhân viên", required=True, prefix="BQL-"),
+            F("ma_so_nhan_vien", "Mã số nhân viên", required=True, prefix="BQL-", pad=3),
             F("ho_ten", "Họ tên", required=True),
             F("ngay_sinh", "Ngày sinh", type="date"),
             F("gioi_tinh", "Giới tính", type="select", options=["NAM", "NU", "KHAC"]),
@@ -141,7 +143,7 @@ ENTITIES = {
                        LEFT JOIN CONG_TY ct ON ct.ma_cong_ty = nv.ma_cong_ty
                        ORDER BY nv.ma_nhan_vien DESC""",
         "fields": [
-            F("ma_so_nhan_vien", "Mã số nhân viên", required=True, prefix="NVCT-"),
+            F("ma_so_nhan_vien", "Mã số nhân viên", required=True, prefix="NVCT-", pad=4),
             F("ma_cong_ty", "Công ty", type="select", required=True,
               fk=("SELECT ma_cong_ty, ten_cong_ty FROM CONG_TY ORDER BY ten_cong_ty", "ma_cong_ty", "ten_cong_ty")),
             F("ho_ten", "Họ tên", required=True),
@@ -294,10 +296,13 @@ def _collect(fields):
         raw = request.form.get(f["name"], "").strip()
         prefix = f.get("prefix")
         if prefix and raw:
-            # Nguoi dung chi go phan so -> ghep tien to. Neu lo go ca tien to thi
-            # khong lap lai (tranh "CT-CT-01").
-            if not raw.upper().startswith(prefix.upper()):
-                raw = prefix + raw
+            # Neu lo go ca tien to thi tach ra truoc (tranh "CT-CT-01").
+            so = raw[len(prefix):] if raw.upper().startswith(prefix.upper()) else raw
+            # Pad so 0 o dau cho dong nhat (vd pad=3: "20" -> "020") neu la so thuan.
+            pad = f.get("pad")
+            if pad and so.isdigit():
+                so = so.zfill(pad)
+            raw = prefix + so
         data[f["name"]] = raw if raw != "" else None
     return data
 
