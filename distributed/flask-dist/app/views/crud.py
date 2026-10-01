@@ -5,7 +5,7 @@ nhanh DN thi moi thay/sua du lieu cua DN (vi node DN chi chua du lieu DN).
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from .. import db
 from ..config import Config
@@ -13,13 +13,35 @@ from ..config import Config
 _NODES = Config.NODES
 
 
-def F(name, label, type="text", required=False, options=None, fk=None):
+class DuplicateError(Exception):
+    """Loi trung ma (ma_so_* da ton tai) - de hien thong bao tieng Viet ro rang."""
+
+
+def _friendly_error(e, cfg):
+    """Dich loi DB sang thong bao tieng Viet than thien.
+
+    - 1062 Duplicate entry -> bao trung ma truong UNIQUE.
+    - Con lai -> hien phan goc gon gang.
+    """
+    orig = getattr(e, "orig", None)
+    code = orig.args[0] if orig and getattr(orig, "args", None) else None
+    if code == 1062:
+        return f"Mã bị trùng: {cfg['title']} với mã số này đã tồn tại. Vui lòng dùng mã khác."
+    return f"Lỗi: {orig if orig else e}"
+
+
+def F(name, label, type="text", required=False, options=None, fk=None, prefix=None):
+    # prefix: tien to co dinh cho ma (vd "CT-", "BQL-", "NVCT-"). Nguoi dung chi go
+    # phan so; prefix duoc ghep tu dong khi luu, va tach ra khi hien thi de sua.
     return {"name": name, "label": label, "type": type, "required": required,
-            "options": options, "fk": fk}
+            "options": options, "fk": fk, "prefix": prefix}
 
 
-def _auto_gan_quan_ly(new_id, data):
+def _auto_gan_quan_ly(new_id, data, t=None):
     """Sau khi them 1 nhan vien toa nha moi -> tu dong gan phan cap quan ly.
+
+    Chay TRONG CUNG transaction `t` (neu co) de dam bao nguyen tu: neu buoc gan
+    quan ly loi thi insert nhan vien cung bi rollback.
 
     Mo hinh: moi chi nhanh (node) 1 quan ly, 2 tang phang.
     - Neu node DA co quan ly (co nguoi la ma_nguoi_quan_ly trong QUAN_LY_NHAN_VIEN)
@@ -28,8 +50,9 @@ def _auto_gan_quan_ly(new_id, data):
       khong tao quan he (se la quan ly cho nhung nguoi them sau).
     """
     import datetime
+    runner = t if t is not None else db
     # Tim quan ly hien tai cua node (quan he con hieu luc)
-    ql = db.query_one(
+    ql = runner.query_one(
         """SELECT ma_nguoi_quan_ly FROM QUAN_LY_NHAN_VIEN
            WHERE ngay_ket_thuc IS NULL ORDER BY ma_quan_ly LIMIT 1"""
     )
@@ -37,7 +60,7 @@ def _auto_gan_quan_ly(new_id, data):
         manager_id = ql["ma_nguoi_quan_ly"]
         # Nhan vien moi khong tu quan ly minh (khong the vi id khac)
         if manager_id != new_id:
-            db.execute(
+            runner.execute(
                 """INSERT INTO QUAN_LY_NHAN_VIEN (ma_nhan_vien, ma_nguoi_quan_ly, ngay_bat_dau)
                    VALUES (:nv, :ql, :ngay)""",
                 {"nv": new_id, "ql": manager_id, "ngay": datetime.date.today().isoformat()},
@@ -48,10 +71,12 @@ def _auto_gan_quan_ly(new_id, data):
 ENTITIES = {
     "cong-ty": {
         "table": "CONG_TY", "pk": "ma_cong_ty", "title": "Công ty",
+        # ma_so_cong_ty phai DUY NHAT tren CA 3 node (khong chi cuc bo).
+        "cross_node_unique": "ma_so_cong_ty",
         "list_cols": [("ma_cong_ty", "Mã"), ("ma_so_cong_ty", "Mã CT"), ("ten_cong_ty", "Tên"),
                       ("khu_vuc", "Khu vực"), ("so_dien_thoai", "SĐT"), ("trang_thai", "Trạng thái")],
         "fields": [
-            F("ma_so_cong_ty", "Mã số công ty", required=True),
+            F("ma_so_cong_ty", "Mã số công ty", required=True, prefix="CT-"),
             F("ma_so_thue", "Mã số thuế", required=True),
             F("ten_cong_ty", "Tên công ty", required=True),
             F("nguoi_dai_dien", "Người đại diện", required=True),
@@ -88,7 +113,7 @@ ENTITIES = {
                        LEFT JOIN VI_TRI_CONG_VIEC v ON v.ma_vi_tri = nv.ma_vi_tri
                        ORDER BY nv.ma_nhan_vien_toa_nha DESC""",
         "fields": [
-            F("ma_so_nhan_vien", "Mã số nhân viên", required=True),
+            F("ma_so_nhan_vien", "Mã số nhân viên", required=True, prefix="BQL-"),
             F("ho_ten", "Họ tên", required=True),
             F("ngay_sinh", "Ngày sinh", type="date"),
             F("gioi_tinh", "Giới tính", type="select", options=["NAM", "NU", "KHAC"]),
@@ -112,7 +137,7 @@ ENTITIES = {
                        LEFT JOIN CONG_TY ct ON ct.ma_cong_ty = nv.ma_cong_ty
                        ORDER BY nv.ma_nhan_vien DESC""",
         "fields": [
-            F("ma_so_nhan_vien", "Mã số nhân viên", required=True),
+            F("ma_so_nhan_vien", "Mã số nhân viên", required=True, prefix="NVCT-"),
             F("ma_cong_ty", "Công ty", type="select", required=True,
               fk=("SELECT ma_cong_ty, ten_cong_ty FROM CONG_TY ORDER BY ten_cong_ty", "ma_cong_ty", "ten_cong_ty")),
             F("ho_ten", "Họ tên", required=True),
@@ -263,8 +288,27 @@ def _collect(fields):
     data = {}
     for f in fields:
         raw = request.form.get(f["name"], "").strip()
+        prefix = f.get("prefix")
+        if prefix and raw:
+            # Nguoi dung chi go phan so -> ghep tien to. Neu lo go ca tien to thi
+            # khong lap lai (tranh "CT-CT-01").
+            if not raw.upper().startswith(prefix.upper()):
+                raw = prefix + raw
         data[f["name"]] = raw if raw != "" else None
     return data
+
+
+def _strip_prefix_for_edit(fields, row):
+    """Khi SUA: tach tien to khoi gia tri de o input chi hien phan so."""
+    if not row:
+        return row
+    row = dict(row)
+    for f in fields:
+        prefix = f.get("prefix")
+        val = row.get(f["name"])
+        if prefix and val and str(val).upper().startswith(prefix.upper()):
+            row[f["name"]] = str(val)[len(prefix):]
+    return row
 
 
 # --- Ghi danh muc chung len CA 3 node (dong bo khoa chinh) ---
@@ -302,6 +346,34 @@ def _replicated_delete(table, pk, item_id):
         db.execute(f"DELETE FROM {table} WHERE {pk}=:id", {"id": item_id}, khu_vuc=kv)
 
 
+def _insert_cross_node_unique(table, pk, uniq_col, data, target_kv):
+    """Insert ban ghi vao node `target_kv`, dam bao `uniq_col` DUY NHAT tren CA 3 node.
+
+    Dung cho CONG_TY: UNIQUE cuc bo moi node khong du vi 2 chi nhanh (2 node khac
+    nhau) co the cung them ma_so_cong_ty giong nhau. Giai phap:
+      1. Lay KHOA PHAN TAN (GET_LOCK tren HN) -> serialize moi thao tac them cong ty
+         tren toan he thong, chong race condition khi 2 chi nhanh them cung luc.
+      2. Trong khoa: kiem tra uniq_col da ton tai o BAT KY node nao chua.
+      3. Neu chua -> insert (trong transaction) tren node dich; neu roi -> bao loi.
+    """
+    uniq_val = data.get(uniq_col)
+    with db.global_lock(f"them_{table}"):
+        # Buoc kiem tra chong 3 node
+        for kv in _NODES:
+            existed = db.scalar(
+                f"SELECT COUNT(*) FROM {table} WHERE {uniq_col}=:v", {"v": uniq_val}, khu_vuc=kv)
+            if existed:
+                raise DuplicateError(
+                    f"Mã '{uniq_val}' đã tồn tại ở chi nhánh {kv}. "
+                    f"Mã số công ty phải duy nhất trên toàn hệ thống (cả 3 chi nhánh).")
+        # Qua kiem tra -> insert trong transaction tren node dich
+        cols = ", ".join(data.keys())
+        ph = ", ".join(f":{k}" for k in data)
+        with db.tx(target_kv) as t:
+            t.execute(f"INSERT INTO {table} ({cols}) VALUES ({ph})", data)
+            return t.last_id
+
+
 def make_crud_blueprints():
     return [_build(slug, cfg) for slug, cfg in ENTITIES.items()]
 
@@ -337,17 +409,36 @@ def _build(slug, cfg):
                 if cfg.get("replicated"):
                     # Danh muc chung -> ghi len ca 3 node voi cung khoa chinh.
                     new_id = _replicated_insert(table, pk, data)
+                elif cfg.get("cross_node_unique"):
+                    # CONG_TY: ma phai duy nhat tren ca 3 node -> khoa + kiem tra chong node.
+                    # Node dich = theo khu_vuc nhap trong form (hoac node dang login).
+                    target_kv = data.get("khu_vuc") or db.current_khu_vuc()
+                    new_id = _insert_cross_node_unique(
+                        table, pk, cfg["cross_node_unique"], data, target_kv)
                 else:
+                    # Insert thuong trong TRANSACTION; neu co after_create thi chay
+                    # cung transaction de dam bao nguyen tu (atomic).
                     cols = ", ".join(data.keys())
                     ph = ", ".join(f":{k}" for k in data)
-                    new_id = db.execute(f"INSERT INTO {table} ({cols}) VALUES ({ph})", data)
-                # Hook sau khi them (vd: tu gan quan ly cho nhan vien toa nha moi)
-                if cfg.get("after_create"):
+                    with db.tx() as t:
+                        t.execute(f"INSERT INTO {table} ({cols}) VALUES ({ph})", data)
+                        new_id = t.last_id
+                        if cfg.get("after_create"):
+                            cfg["after_create"](new_id, data, t)
+                    flash(f"Da them {cfg['title']}.", "success")
+                    return redirect(url_for(f"crud_{slug.replace('-', '_')}.list_view"))
+
+                # Nhanh replicated / cross_node co the co after_create ngoai tx
+                if cfg.get("after_create") and not cfg.get("cross_node_unique"):
                     cfg["after_create"](new_id, data)
                 flash(f"Da them {cfg['title']}.", "success")
                 return redirect(url_for(f"crud_{slug.replace('-', '_')}.list_view"))
+            except (DuplicateError, TimeoutError) as e:
+                flash(str(e), "danger")
+            except IntegrityError as e:
+                flash(_friendly_error(e, cfg), "danger")
             except SQLAlchemyError as e:
-                flash(f"Loi: {getattr(e, 'orig', e)}", "danger")
+                flash(_friendly_error(e, cfg), "danger")
         return render_template("crud_form.html", slug=slug, cfg=cfg, fields=fields, row=None)
 
     @bp.route("/<int:item_id>/edit", methods=["GET", "POST"])
@@ -370,8 +461,9 @@ def _build(slug, cfg):
                 flash(f"Da cap nhat {cfg['title']}.", "success")
                 return redirect(url_for(f"crud_{slug.replace('-', '_')}.list_view"))
             except SQLAlchemyError as e:
-                flash(f"Loi: {getattr(e, 'orig', e)}", "danger")
-        return render_template("crud_form.html", slug=slug, cfg=cfg, fields=fields, row=row)
+                flash(_friendly_error(e, cfg), "danger")
+        return render_template("crud_form.html", slug=slug, cfg=cfg, fields=fields,
+                               row=_strip_prefix_for_edit(fields, row))
 
     @bp.route("/<int:item_id>/delete", methods=["POST"])
     @login_required

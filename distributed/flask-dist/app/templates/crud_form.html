@@ -23,6 +23,13 @@
       </select>
     {% elif f.type == 'textarea' %}
       <textarea name="{{ f.name }}" rows="3">{{ current }}</textarea>
+    {% elif f.prefix %}
+      <div style="display:flex;align-items:stretch;">
+        <span style="display:inline-flex;align-items:center;padding:0 12px;background:#f1f5f9;border:1px solid var(--line);border-right:none;border-radius:6px 0 0 6px;color:#475569;font-weight:600;">{{ f.prefix }}</span>
+        <input type="text" name="{{ f.name }}" value="{{ current }}" {{ 'required' if f.required }}
+               placeholder="chỉ nhập phần số, vd 11" style="border-radius:0 6px 6px 0;flex:1;">
+      </div>
+      <small style="color:var(--muted);">Hệ thống tự thêm tiền tố <b>{{ f.prefix }}</b></small>
     {% else %}
       <input type="{{ f.type }}" name="{{ f.name }}" value="{{ current }}" {{ 'step=any' if f.type=='number' }} {{ 'required' if f.required }}>
     {% endif %}
