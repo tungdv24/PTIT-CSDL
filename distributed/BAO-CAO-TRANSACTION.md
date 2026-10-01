@@ -7,9 +7,14 @@ tình huống trùng mã, cơ chế transaction/ràng buộc xử lý, và kết
 
 | # | Tình huống | Phạm vi | Cơ chế bảo vệ |
 |---|-----------|---------|---------------|
-| 1 | Hai nhân viên tòa nhà cùng `ma_so_nhan_vien` (BQL-xxx) | Cùng 1 node | UNIQUE cục bộ + transaction |
-| 2 | Hai nhân viên công ty cùng `ma_so_nhan_vien` (NVCT-xxxx) | Cùng 1 node | UNIQUE cục bộ + transaction |
+| 1 | Hai nhân viên tòa nhà cùng `ma_so_nhan_vien` (BQL-xxx) | Cùng node **và** khác node | UNIQUE cục bộ + khóa phân tán + kiểm tra chéo 3 node |
+| 2 | Hai nhân viên công ty cùng `ma_so_nhan_vien` (NVCT-xxxx) | Cùng node **và** khác node | UNIQUE cục bộ + khóa phân tán + kiểm tra chéo 3 node |
 | 3 | Hai chi nhánh thêm công ty cùng `ma_so_cong_ty` (CT-xx) | **Khác node** | Khóa phân tán + kiểm tra chéo 3 node |
+
+> Cả 3 loại mã (CT-, BQL-, NVCT-) đều phải **duy nhất trên toàn hệ thống**. Vì
+> dữ liệu được phân mảnh theo chi nhánh (mỗi node chỉ chứa dữ liệu của mình),
+> UNIQUE cục bộ chỉ chặn trùng trong cùng node; để chặn trùng **giữa các node**
+> cần khóa phân tán + kiểm tra chéo 3 node (xem mục 2.2).
 
 ## 2. Cơ chế kỹ thuật
 
@@ -57,14 +62,19 @@ chi nhánh thêm cùng lúc sẽ bị xếp hàng, người sau thấy mã đã 
 
 | # | Kịch bản | Kỳ vọng | Kết quả |
 |---|----------|---------|---------|
-| 1 | Thêm NV tòa nhà `BQL-001` (đã có ở HN) | Bị chặn | ✅ "Mã bị trùng: Nhân viên tòa nhà với mã số này đã tồn tại." — HN vẫn 5 NV |
-| 2 | Thêm NV công ty `NVCT-0001` (đã có ở HN) | Bị chặn | ✅ "Mã bị trùng: Nhân viên công ty với mã số này đã tồn tại." — HN vẫn 20 NVCT |
-| 3 | Thêm công ty `CT-05` vào HN (đã có ở **DN**) | Bị chặn (cross-node) | ✅ "Mã 'CT-05' đã tồn tại ở chi nhánh DN. Mã số công ty phải duy nhất trên toàn hệ thống." — HN vẫn 0 |
-| 4 | Thêm NV công ty `NVCT-9999` (mã mới) | Thành công | ✅ Thêm được (exists=1) |
-| 5 | Thêm công ty `CT-99` vào HN (mã mới) | Thành công | ✅ Thêm được (exists=1) |
+| 1 | Thêm NV tòa nhà `BQL-001` (đã có ở HN), cùng node HN | Bị chặn | ✅ Báo trùng mã — HN vẫn 5 NV |
+| 2 | Thêm NV công ty `NVCT-0001` (đã có ở HN), cùng node HN | Bị chặn | ✅ Báo trùng mã — HN vẫn 20 NVCT |
+| 3 | Thêm công ty `CT-05` vào HN (đã có ở **DN**) | Bị chặn (cross-node) | ✅ "Mã 'CT-05' đã tồn tại ở chi nhánh DN..." — HN vẫn 0 |
+| 4 | **Login DN**, thêm `NVCT-0001` (đã có ở **HN**) | Bị chặn (cross-node) | ✅ "...đã tồn tại ở chi nhánh HN. Mã của Nhân viên công ty phải duy nhất..." — DN vẫn 0 |
+| 5 | **Login DN**, thêm `BQL-001` (đã có ở **HN**) | Bị chặn (cross-node) | ✅ "...đã tồn tại ở chi nhánh HN. Mã của Nhân viên tòa nhà phải duy nhất..." — DN vẫn 0 |
+| 6 | Thêm NV công ty `NVCT-9999` (mã mới) | Thành công | ✅ Thêm được |
+| 7 | Thêm công ty `CT-99` vào HN (mã mới) | Thành công | ✅ Thêm được |
+| 8 | Login DN, thêm NV tòa nhà `BQL-777` (mã mới) | Thành công + tự gán quản lý | ✅ Tạo được, quan hệ quản lý tạo trong cùng transaction |
 
-> Ca 3 là điểm mấu chốt của hệ phân tán: UNIQUE cục bộ ở HN không chặn được (vì
-> HN chưa có CT-05), chính **khóa phân tán + kiểm tra chéo node** mới bắt được.
+> Ca 3-4-5 là điểm mấu chốt của hệ phân tán: UNIQUE cục bộ ở node đích không
+> chặn được (vì node đó chưa có mã), chính **khóa phân tán + kiểm tra chéo node**
+> mới bắt được. Ca 8 chứng minh `after_create` (tự gán quản lý) chạy trong cùng
+> transaction nên vẫn nguyên tử.
 
 ## 4. Kết luận
 - Ca 1, 2: ràng buộc UNIQUE + transaction đảm bảo không trùng mã trong một chi nhánh.

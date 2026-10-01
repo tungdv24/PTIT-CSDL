@@ -103,6 +103,8 @@ ENTITIES = {
     },
     "nhan-vien-toa-nha": {
         "table": "NHAN_VIEN_TOA_NHA", "pk": "ma_nhan_vien_toa_nha", "title": "Nhân viên tòa nhà",
+        # ma_so_nhan_vien phai DUY NHAT tren CA 3 node (khong chi cuc bo).
+        "cross_node_unique": "ma_so_nhan_vien",
         "after_create": _auto_gan_quan_ly,
         "list_cols": [("ma_nhan_vien_toa_nha", "Mã"), ("ma_so_nhan_vien", "Mã NV"), ("ho_ten", "Họ tên"),
                       ("ten_vi_tri", "Vị trí"), ("khu_vuc", "Khu vực"), ("so_dien_thoai", "SĐT"),
@@ -129,6 +131,8 @@ ENTITIES = {
     },
     "nhan-vien-cong-ty": {
         "table": "NHAN_VIEN_CONG_TY", "pk": "ma_nhan_vien", "title": "Nhân viên công ty",
+        # ma_so_nhan_vien phai DUY NHAT tren CA 3 node (khong chi cuc bo).
+        "cross_node_unique": "ma_so_nhan_vien",
         "list_cols": [("ma_nhan_vien", "Mã"), ("ma_so_nhan_vien", "Mã NV"), ("ho_ten", "Họ tên"),
                       ("ten_cong_ty", "Công ty"), ("chuc_vu", "Chức vụ"), ("trang_thai", "Trạng thái")],
         "list_sql": """SELECT nv.ma_nhan_vien, nv.ma_so_nhan_vien, nv.ho_ten,
@@ -346,15 +350,17 @@ def _replicated_delete(table, pk, item_id):
         db.execute(f"DELETE FROM {table} WHERE {pk}=:id", {"id": item_id}, khu_vuc=kv)
 
 
-def _insert_cross_node_unique(table, pk, uniq_col, data, target_kv):
+def _insert_cross_node_unique(table, pk, uniq_col, data, target_kv, title, after_create=None):
     """Insert ban ghi vao node `target_kv`, dam bao `uniq_col` DUY NHAT tren CA 3 node.
 
-    Dung cho CONG_TY: UNIQUE cuc bo moi node khong du vi 2 chi nhanh (2 node khac
-    nhau) co the cung them ma_so_cong_ty giong nhau. Giai phap:
-      1. Lay KHOA PHAN TAN (GET_LOCK tren HN) -> serialize moi thao tac them cong ty
-         tren toan he thong, chong race condition khi 2 chi nhanh them cung luc.
+    Dung cho CONG_TY (ma_so_cong_ty), NHAN_VIEN_CONG_TY & NHAN_VIEN_TOA_NHA
+    (ma_so_nhan_vien): UNIQUE cuc bo moi node khong du vi 2 chi nhanh (2 node khac
+    nhau) co the cung dung mot ma. Giai phap:
+      1. Lay KHOA PHAN TAN (GET_LOCK tren HN) -> serialize thao tac tren toan he
+         thong, chong race condition khi 2 chi nhanh them cung luc.
       2. Trong khoa: kiem tra uniq_col da ton tai o BAT KY node nao chua.
       3. Neu chua -> insert (trong transaction) tren node dich; neu roi -> bao loi.
+      4. after_create (neu co) chay TRONG CUNG transaction -> nguyen tu.
     """
     uniq_val = data.get(uniq_col)
     with db.global_lock(f"them_{table}"):
@@ -365,13 +371,16 @@ def _insert_cross_node_unique(table, pk, uniq_col, data, target_kv):
             if existed:
                 raise DuplicateError(
                     f"Mã '{uniq_val}' đã tồn tại ở chi nhánh {kv}. "
-                    f"Mã số công ty phải duy nhất trên toàn hệ thống (cả 3 chi nhánh).")
+                    f"Mã của {title} phải duy nhất trên toàn hệ thống (cả 3 chi nhánh).")
         # Qua kiem tra -> insert trong transaction tren node dich
         cols = ", ".join(data.keys())
         ph = ", ".join(f":{k}" for k in data)
         with db.tx(target_kv) as t:
             t.execute(f"INSERT INTO {table} ({cols}) VALUES ({ph})", data)
-            return t.last_id
+            new_id = t.last_id
+            if after_create:
+                after_create(new_id, data, t)
+            return new_id
 
 
 def make_crud_blueprints():
@@ -410,11 +419,14 @@ def _build(slug, cfg):
                     # Danh muc chung -> ghi len ca 3 node voi cung khoa chinh.
                     new_id = _replicated_insert(table, pk, data)
                 elif cfg.get("cross_node_unique"):
-                    # CONG_TY: ma phai duy nhat tren ca 3 node -> khoa + kiem tra chong node.
+                    # CONG_TY / NHAN_VIEN_*: ma phai duy nhat tren ca 3 node ->
+                    # khoa phan tan + kiem tra chong node. after_create (vd tu gan
+                    # quan ly cho NV toa nha) chay trong cung transaction.
                     # Node dich = theo khu_vuc nhap trong form (hoac node dang login).
                     target_kv = data.get("khu_vuc") or db.current_khu_vuc()
                     new_id = _insert_cross_node_unique(
-                        table, pk, cfg["cross_node_unique"], data, target_kv)
+                        table, pk, cfg["cross_node_unique"], data, target_kv,
+                        cfg["title"], cfg.get("after_create"))
                 else:
                     # Insert thuong trong TRANSACTION; neu co after_create thi chay
                     # cung transaction de dam bao nguyen tu (atomic).
